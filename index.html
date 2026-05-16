@@ -4,6 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>Dompet NBS - Catatan Keuangan Pintar</title>
+    <!-- html2pdf.js library untuk export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
@@ -31,6 +33,34 @@
         }
         .rekening-title { font-size: 1.3rem; font-weight: 600; color: #475569; margin-bottom: 8px; }
         .saldo { font-size: 2.4rem; font-weight: 800; color: #0f3a55; margin: 8px 0; }
+        /* Ringkasan keuangan */
+        .summary-stats {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 16px 0 8px;
+            flex-wrap: wrap;
+        }
+        .stat-card {
+            flex: 1;
+            background: #f8fafc;
+            border-radius: 24px;
+            padding: 12px 8px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin-bottom: 4px;
+        }
+        .stat-value {
+            font-weight: 700;
+            font-size: 1rem;
+        }
+        .stat-income .stat-value { color: #15803d; }
+        .stat-expense .stat-value { color: #b91c1c; }
+        .stat-balance .stat-value { color: #0f3a55; }
         .action-row { display: flex; justify-content: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .filter-bar {
             background: white; border-radius: 28px; padding: 14px; margin-bottom: 16px;
@@ -114,6 +144,13 @@
             background: #f8fafc; padding: 10px 16px; border-radius: 60px; margin-bottom: 8px;
         }
         .detail-item { padding: 8px 0; border-bottom: 1px solid #eef2ff; display: flex; justify-content: space-between; }
+        /* Styling untuk PDF export */
+        @media print {
+            body { background: white; padding: 0; margin: 0; }
+            .fixed-bottom-buttons, .action-buttons, .edit-trans, .delete-trans, .btn-icon, .filter-bar, .action-row button, #managePayerBtn, #resetFilterBtn, .float-btn, .toast-message, .modal-overlay { display: none !important; }
+            .transaksi-item { break-inside: avoid; }
+            .dashboard-header, .summary-stats, .transaksi-list { box-shadow: none; border: 1px solid #ddd; }
+        }
     </style>
 </head>
 <body>
@@ -126,10 +163,26 @@
         <div class="dashboard-header">
             <div class="rekening-title" id="dashboardNamaRekening">-</div>
             <div class="saldo" id="dashboardSaldo">Rp0</div>
+            <!-- Ringkasan Total Pemasukan, Total Pengeluaran, Saldo -->
+            <div class="summary-stats" id="summaryStats">
+                <div class="stat-card stat-income">
+                    <div class="stat-label">💚 Total Pemasukan</div>
+                    <div class="stat-value" id="totalIncome">Rp0</div>
+                </div>
+                <div class="stat-card stat-expense">
+                    <div class="stat-label">❤️ Total Pengeluaran</div>
+                    <div class="stat-value" id="totalExpense">Rp0</div>
+                </div>
+                <div class="stat-card stat-balance">
+                    <div class="stat-label">💙 Saldo</div>
+                    <div class="stat-value" id="balanceAmount">Rp0</div>
+                </div>
+            </div>
             <div class="action-row">
                 <button class="btn-icon btn-outline" id="logoutButton">📋 Daftar Rekening</button>
                 <button class="btn-icon btn-outline" id="editAccountBtn">✏️ Edit Rekening</button>
                 <button class="btn-icon btn-danger" id="deleteAccountBtn">🗑️ Hapus</button>
+                <button class="btn-icon btn-primary" id="exportPdfBtn">📄 Export PDF</button>
             </div>
         </div>
         <div class="filter-bar">
@@ -175,7 +228,7 @@
 <div id="transaksiModal" class="modal-overlay">
     <div class="modal-card">
         <h3 id="transaksiModalTitle">Tambah Transaksi</h3>
-        <textarea id="txRawText" placeholder="Contoh single:&#10;Buku tulis 5 lembar 50.000&#10;Makan 5000&#10;Makan 5rb&#10;Makan 5ribu&#10;Makan 5k&#10;&#10;Contoh kolektif (baris pertama judul):&#10;Konsumsi&#10;makan 50000&#10;minum 5rb&#10;kopi 2 dus 7.000&#10;sayur 4 mangkuk 8000&#10;kopi hitam 5ribu&#10;air 7k"></textarea>
+        <textarea id="txRawText" placeholder="Contoh single:&#10;Buku tulis 5 lembar 50.000&#10;Makan 5000&#10;Makan 5rb&#10;&#10;Contoh kolektif (baris pertama judul):&#10;Konsumsi&#10;makan 50000&#10;minum 5rb&#10;kopi 2 dus 7.000&#10;sayur 4 mangkuk 8000"></textarea>
         <div class="input-with-button">
             <input type="text" id="txPayer" list="payerList" placeholder="Pembayar (opsional)" autocomplete="off">
             <datalist id="payerList"></datalist>
@@ -246,7 +299,7 @@
     let currentEditTransactionId = null;
     let pendingTransactionType = 'income';
 
-    // DOM elements (singkat)
+    // DOM elements
     const accountsView = document.getElementById('accountsView');
     const dashboardView = document.getElementById('dashboardView');
     const accountsListEl = document.getElementById('accountsList');
@@ -261,8 +314,12 @@
     const logoutButton = document.getElementById('logoutButton');
     const editAccountBtn = document.getElementById('editAccountBtn');
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
     const dashboardNama = document.getElementById('dashboardNamaRekening');
     const dashboardSaldo = document.getElementById('dashboardSaldo');
+    const totalIncomeEl = document.getElementById('totalIncome');
+    const totalExpenseEl = document.getElementById('totalExpense');
+    const balanceAmountEl = document.getElementById('balanceAmount');
     const transactionsListEl = document.getElementById('transactionsList');
     const filterStart = document.getElementById('filterStartDate');
     const filterEnd = document.getElementById('filterEndDate');
@@ -305,11 +362,9 @@
     function formatDate(iso) { if(!iso) return "-"; const d = new Date(iso); return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }); }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-    // ========== FUNGSI PARSING NOMINAL YANG BENAR ==========
-    // Mengkonversi string nominal (misal "5000", "5rb", "7.000", "5ribu") menjadi angka
+    // ========== FUNGSI PARSING NOMINAL ==========
     function parseNominalString(nominalStr) {
         let clean = nominalStr.toLowerCase().trim();
-        // Cek suffix
         let multiplier = 1;
         if (clean.endsWith('rb') || clean.endsWith('ribu')) {
             multiplier = 1000;
@@ -318,46 +373,34 @@
             multiplier = 1000;
             clean = clean.replace(/k$/, '');
         }
-        // Hapus titik dan koma pemisah ribuan
         clean = clean.replace(/\./g, '').replace(/,/g, '');
         let num = parseFloat(clean);
         if (isNaN(num)) return null;
         return num * multiplier;
     }
-
-    // Ekstrak nominal dari sebuah baris: ambil kata terakhir, jika itu adalah nominal maka hapus, sisanya deskripsi
     function extractNominalFromLine(line) {
         let words = line.trim().split(/\s+/);
         if (words.length === 0) return null;
         let lastWord = words[words.length - 1];
         let nominal = parseNominalString(lastWord);
         if (nominal !== null) {
-            // Hapus kata terakhir
             let description = words.slice(0, -1).join(' ');
             return { value: nominal, description: description, matchText: lastWord };
         }
         return null;
     }
-
-    // Parsing teks transaksi (single atau kolektif)
     function parseTransactionText(rawText, type) {
         const lines = rawText.split(/\r?\n/).filter(l => l.trim().length > 0);
         if (lines.length === 0) throw new Error("Teks kosong");
-        
-        // Cek apakah baris pertama memiliki nominal (single line) atau tidak (kolektif dengan judul)
         const firstLineNominal = extractNominalFromLine(lines[0]);
-        
         if (lines.length === 1 || firstLineNominal === null) {
-            // Single line atau kolektif dengan judul di baris pertama
             if (lines.length === 1) {
-                // Single line: harus ada nominal
                 const nominalInfo = extractNominalFromLine(lines[0]);
                 if (!nominalInfo) throw new Error("Tidak ditemukan nominal. Contoh: 'Buku 50.000'");
                 let description = nominalInfo.description;
                 if (!description) description = type === 'income' ? 'Pemasukan' : 'Pengeluaran';
                 return { description, amount: nominalInfo.value, items: null, isCollective: false };
             } else {
-                // Kolektif: baris pertama adalah judul (tanpa nominal)
                 const title = lines[0].trim();
                 if (!title) throw new Error("Judul transaksi kolektif tidak boleh kosong");
                 const items = [];
@@ -375,8 +418,6 @@
                 return { description: title, amount: total, items, isCollective: true };
             }
         } else {
-            // Baris pertama punya nominal, tapi ini multi baris? Maka dianggap single line gabungan
-            // Gabungkan semua baris
             const combined = lines.join(' ');
             const nominalInfo = extractNominalFromLine(combined);
             if (!nominalInfo) throw new Error("Tidak ditemukan nominal");
@@ -385,8 +426,6 @@
             return { description, amount: nominalInfo.value, items: null, isCollective: false };
         }
     }
-
-    // Helper untuk menghasilkan teks representasi transaksi (untuk edit)
     function transactionToRawText(tx) {
         if (tx.items && tx.items.length > 0) {
             let result = tx.description + "\n";
@@ -420,11 +459,9 @@
     async function editAccountName() { const pwd = prompt("Masukkan password untuk edit nama:"); if(pwd !== currentAccount.password) { showToast("Password salah"); return; } const newName = prompt("Nama baru:", currentAccount.name); if(newName && newName.trim()) { currentAccount.name = newName.trim(); await updateAccountInFirebase(); dashboardNama.innerText = currentAccount.name; showToast("Nama rekening diubah"); } }
     function updatePayerDatalists() { const options = availablePayers.map(p => `<option value="${escapeHtml(p)}">`).join(''); payerList.innerHTML = options; editPayerList.innerHTML = options; }
     async function addNewPayerFromInput(inputElement) { const newPayer = inputElement.value.trim(); if(!newPayer) { showToast("Masukkan nama pembayar"); return; } if(availablePayers.includes(newPayer)) { showToast("Pembayar sudah ada"); return; } availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); showToast(`Pembayar "${newPayer}" ditambahkan`); inputElement.value = newPayer; }
-    
     async function openPayerManager() { renderPayerList(); payerManagerModal.classList.add('active'); }
     function renderPayerList() { if(!availablePayers.length) { payerListContainer.innerHTML = '<div class="small-text">Belum ada pembayar, tambahkan.</div>'; return; } payerListContainer.innerHTML = availablePayers.map(p => `<div class="payer-list-item"><span>👤 ${escapeHtml(p)}</span><button class="delete-payer-btn" data-payer="${escapeHtml(p)}" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">🗑️</button></div>`).join(''); document.querySelectorAll('.delete-payer-btn').forEach(btn => btn.addEventListener('click', async () => { const payer = btn.dataset.payer; if(confirm(`Hapus pembayar "${payer}"?`)) { availablePayers = availablePayers.filter(p => p !== payer); currentAccount.transactions.forEach(tx => { if(tx.payer === payer) tx.payer = ""; }); await updateAccountInFirebase(); updatePayerDatalists(); renderFilteredTransactions(); renderPayerList(); showToast("Pembayar dihapus"); } })); }
     async function addNewPayerGlobal() { const newPayer = newPayerName.value.trim(); if(!newPayer) return; if(availablePayers.includes(newPayer)) { showToast("Sudah ada"); return; } availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); renderFilteredTransactions(); renderPayerList(); newPayerName.value = ''; showToast("Pembayar ditambahkan"); }
-    
     function openAddTransactionModal(type) {
         pendingTransactionType = type;
         transaksiModalTitle.innerText = type === 'income' ? '➕ Tambah Pemasukan' : '➖ Tambah Pengeluaran';
@@ -467,8 +504,16 @@
         if(end) filtered = filtered.filter(t => new Date(t.date) <= new Date(end + "T23:59:59"));
         const field = sortField.value, order = sortOrder.value;
         filtered.sort((a,b) => { let valA, valB; if(field === 'date') { valA = new Date(a.date); valB = new Date(b.date); } else if(field === 'description') { valA = a.description.toLowerCase(); valB = b.description.toLowerCase(); } else if(field === 'payer') { valA = (a.payer || '').toLowerCase(); valB = (b.payer || '').toLowerCase(); } else { valA = a.amount; valB = b.amount; } if(order === 'asc') return valA > valB ? 1 : -1; else return valA < valB ? 1 : -1; });
-        let saldo = 0; (currentAccount.transactions || []).forEach(tx => { if(tx.type === 'income') saldo += tx.amount; else saldo -= tx.amount; });
-        dashboardSaldo.innerText = formatRupiah(saldo);
+        
+        // Hitung total pemasukan, pengeluaran, saldo
+        let totalInc = 0, totalExp = 0;
+        (currentAccount.transactions || []).forEach(tx => { if(tx.type === 'income') totalInc += tx.amount; else totalExp += tx.amount; });
+        const balance = totalInc - totalExp;
+        totalIncomeEl.innerText = formatRupiah(totalInc);
+        totalExpenseEl.innerText = formatRupiah(totalExp);
+        balanceAmountEl.innerText = formatRupiah(balance);
+        dashboardSaldo.innerText = formatRupiah(balance);
+        
         if(!filtered.length) { transactionsListEl.innerHTML = '<div class="empty-trans">Tidak ada transaksi</div>'; return; }
         transactionsListEl.innerHTML = filtered.map(tx => `
             <div class="transaksi-item" data-id="${tx.id}">
@@ -490,6 +535,7 @@
                 </div>
             </div>
         `).join('');
+        // event listener untuk klik detail, hapus, edit (sama seperti sebelumnya)
         document.querySelectorAll('.transaksi-item').forEach(el => {
             const id = el.dataset.id;
             el.addEventListener('click', (e) => {
@@ -513,7 +559,6 @@
         detailModal.classList.add('active');
     }
     closeDetailBtn.addEventListener('click', () => detailModal.classList.remove('active'));
-    
     function openEditModal(tx) {
         currentEditTransactionId = tx.id;
         const rawText = transactionToRawText(tx);
@@ -549,7 +594,81 @@
     }
     function resetFilters() { filterStart.value = ''; filterEnd.value = ''; sortField.value = 'date'; sortOrder.value = 'desc'; renderFilteredTransactions(); }
 
-    // Event listeners
+    // ========== EXPORT PDF ==========
+    async function exportToPDF() {
+        if (!currentAccount) return;
+        // Siapkan elemen untuk PDF
+        const element = document.createElement('div');
+        element.style.padding = '20px';
+        element.style.fontFamily = 'system-ui, sans-serif';
+        element.style.backgroundColor = 'white';
+        // Header
+        element.innerHTML = `
+            <div style="text-align: center; margin-bottom: 20px;">
+                <h2 style="color: #1e4a6b;">Dompet NBS</h2>
+                <p style="font-size: 14px;">Laporan Keuangan - ${escapeHtml(currentAccount.name)}</p>
+                <p style="font-size: 12px; color: #64748b;">Periode: ${filterStart.value ? filterStart.value : 'Semua'} - ${filterEnd.value ? filterEnd.value : 'Semua'} | Tanggal cetak: ${new Date().toLocaleDateString('id-ID')}</p>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; gap: 10px;">
+                <div style="flex:1; text-align: center; padding: 10px; background: #f0fdf4; border-radius: 12px;">
+                    <div style="font-size: 12px;">Total Pemasukan</div>
+                    <div style="font-weight: bold; color: #15803d;">${totalIncomeEl.innerText}</div>
+                </div>
+                <div style="flex:1; text-align: center; padding: 10px; background: #fef2f2; border-radius: 12px;">
+                    <div style="font-size: 12px;">Total Pengeluaran</div>
+                    <div style="font-weight: bold; color: #b91c1c;">${totalExpenseEl.innerText}</div>
+                </div>
+                <div style="flex:1; text-align: center; padding: 10px; background: #eff6ff; border-radius: 12px;">
+                    <div style="font-size: 12px;">Saldo</div>
+                    <div style="font-weight: bold; color: #0f3a55;">${balanceAmountEl.innerText}</div>
+                </div>
+            </div>
+            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+                <thead>
+                    <tr style="background: #f1f5f9;">
+                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Tanggal</th>
+                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Deskripsi</th>
+                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Pembayar</th>
+                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Nominal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${Array.from(transactionsListEl.querySelectorAll('.transaksi-item')).map(item => {
+                        const descSpan = item.querySelector('.transaksi-deskripsi');
+                        let desc = descSpan ? descSpan.childNodes[0]?.nodeValue?.trim() || '' : '';
+                        const payerSpan = item.querySelector('.payer-badge');
+                        const payer = payerSpan ? payerSpan.innerText.replace('👤', '').trim() : '';
+                        const nominalSpan = item.querySelector('.transaksi-nominal');
+                        let nominal = nominalSpan ? nominalSpan.innerText : '';
+                        const dateSpan = item.querySelector('.transaksi-tanggal');
+                        let date = dateSpan ? dateSpan.innerText : '';
+                        return `<tr>
+                            <td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(date)}</td>
+                            <td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(desc)}</td>
+                            <td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(payer)}</td>
+                            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: right;">${escapeHtml(nominal)}</td>
+                        </tr>`;
+                    }).join('')}
+                </tbody>
+            </table>
+            <div style="margin-top: 20px; text-align: center; font-size: 10px; color: #94a3b8;">
+                Dicetak dari Dompet NBS - Aplikasi Catatan Keuangan
+            </div>
+        `;
+        // Gunakan html2pdf
+        const opt = {
+            margin: [0.5, 0.5, 0.5, 0.5],
+            filename: `laporan_keuangan_${currentAccount.name}_${new Date().toISOString().slice(0,10)}.pdf`,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, letterRendering: true },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(element).save();
+        showToast("PDF sedang diproses...");
+    }
+    exportPdfBtn.addEventListener('click', exportToPDF);
+
+    // Event listeners lainnya
     btnTambahRekening.addEventListener('click', () => { modalTitle.innerText = "Rekening Baru"; modalInputName.style.display = 'block'; modalInputPassword.value = ''; modalInputName.value = ''; modal.dataset.mode = 'create'; modal.classList.add('active'); });
     modalCancelBtn.addEventListener('click', closeModal);
     modalConfirmBtn.addEventListener('click', async () => { if(modal.dataset.mode === 'create') { try { await createNewAccount(modalInputName.value.trim(), modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; } } else if(modal.dataset.mode === 'login') { try { await verifyAndLogin(modal.dataset.id, modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; } } });
