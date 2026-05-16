@@ -16,7 +16,7 @@
             font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #f5f7fb;
             padding: 16px;
-            padding-bottom: 90px; /* space for fixed buttons */
+            padding-bottom: 100px;
             color: #1e293b;
         }
 
@@ -25,7 +25,6 @@
             margin: 0 auto;
         }
 
-        /* Header dan tombol */
         .header {
             display: flex;
             justify-content: space-between;
@@ -61,8 +60,8 @@
         .btn-primary { background: #1e4a6b; color: white; border: none; }
         .btn-danger { background: #fff1f0; color: #c2410c; border-color: #ffddd6; }
         .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
+        .btn-small { padding: 8px 12px; font-size: 0.8rem; }
         
-        /* Dashboard header */
         .dashboard-header {
             background: white;
             border-radius: 32px;
@@ -89,12 +88,6 @@
             margin-top: 16px;
             flex-wrap: wrap;
         }
-        .action-row .btn-icon {
-            font-size: 0.85rem;
-            padding: 8px 14px;
-        }
-
-        /* Filter bar */
         .filter-bar {
             background: white;
             border-radius: 28px;
@@ -113,20 +106,20 @@
             min-width: 110px;
             font-size: 0.85rem;
         }
-        .filter-bar button {
-            padding: 8px 12px;
+        .sort-group {
+            display: flex;
+            gap: 6px;
+            flex: 2;
+            min-width: 160px;
         }
-
-        /* Daftar transaksi */
+        .sort-group select {
+            flex: 1;
+        }
         .transaksi-header {
             display: flex;
             justify-content: space-between;
             align-items: baseline;
             margin: 16px 6px 12px 6px;
-        }
-        .transaksi-header h3 {
-            font-size: 1.3rem;
-            font-weight: 600;
         }
         .transaksi-list {
             background: white;
@@ -191,8 +184,6 @@
             padding: 40px;
             color: #94a3b8;
         }
-
-        /* Tombol floating bawah */
         .fixed-bottom-buttons {
             position: fixed;
             bottom: 20px;
@@ -224,8 +215,6 @@
         .float-btn:active { transform: scale(0.97); }
         .btn-income { background: #15803d; color: white; }
         .btn-expense { background: #b91c1c; color: white; }
-
-        /* Modal */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -267,6 +256,20 @@
             border-radius: 60px;
             font-size: 1rem;
         }
+        .input-with-button {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            margin: 8px 0 16px;
+        }
+        .input-with-button input {
+            flex: 1;
+            margin: 0;
+        }
+        .input-with-button button {
+            padding: 12px 14px;
+            white-space: nowrap;
+        }
         .modal-buttons {
             display: flex;
             gap: 12px;
@@ -280,22 +283,6 @@
             border: none;
             cursor: pointer;
         }
-        .tag-manager {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin: 15px 0;
-        }
-        .tag-item {
-            background: #eef2ff;
-            padding: 6px 14px;
-            border-radius: 40px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-        .small-text { font-size: 0.75rem; color: #64748b; }
-        hr { margin: 12px 0; }
         .toast-message {
             position: fixed;
             bottom: 100px;
@@ -311,11 +298,28 @@
             transition: 0.3s;
             pointer-events: none;
         }
+        .accounts-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+        .account-card {
+            background: white;
+            border-radius: 28px;
+            padding: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            border: 1px solid #edf2f7;
+        }
+        .account-name { font-size: 1.25rem; font-weight: 600; }
+        .account-badge { background: #eef2ff; padding: 6px 12px; border-radius: 40px; font-size: 0.75rem; }
+        .loading { text-align: center; padding: 40px; color: #5b6e8c; }
     </style>
 </head>
 <body>
 <div class="app-container">
-    <!-- Tampilan daftar rekening -->
     <div id="accountsView">
         <div class="header">
             <h1>Dompet NBS</h1>
@@ -326,7 +330,6 @@
         </div>
     </div>
 
-    <!-- Dashboard rekening -->
     <div id="dashboardView" style="display: none;">
         <div class="dashboard-header">
             <div class="rekening-title" id="dashboardNamaRekening">-</div>
@@ -342,13 +345,18 @@
         <div class="filter-bar">
             <input type="date" id="filterStartDate" placeholder="Dari tgl">
             <input type="date" id="filterEndDate" placeholder="Sampai tgl">
-            <select id="filterPayerSelect"><option value="">Semua Pembayar</option></select>
-            <select id="sortSelect">
-                <option value="newest">Terbaru</option>
-                <option value="oldest">Terlama</option>
-                <option value="highest">Nominal Tertinggi</option>
-                <option value="lowest">Nominal Terendah</option>
-            </select>
+            <div class="sort-group">
+                <select id="sortField">
+                    <option value="date">Tanggal</option>
+                    <option value="description">Deskripsi</option>
+                    <option value="payer">Pembayar</option>
+                    <option value="amount">Nominal</option>
+                </select>
+                <select id="sortOrder">
+                    <option value="desc">Terbaru / Terbesar (Z-A)</option>
+                    <option value="asc">Terlama / Terkecil (A-Z)</option>
+                </select>
+            </div>
             <button id="resetFilterBtn" class="btn-icon">Reset</button>
         </div>
 
@@ -361,7 +369,6 @@
     </div>
 </div>
 
-<!-- Tombol floating bawah (Pemasukan & Pengeluaran) -->
 <div class="fixed-bottom-buttons" id="fixedButtons" style="display: none;">
     <button class="float-btn btn-income" id="btnIncomeFloating">➕ Pemasukan</button>
     <button class="float-btn btn-expense" id="btnExpenseFloating">➖ Pengeluaran</button>
@@ -381,14 +388,18 @@
     </div>
 </div>
 
-<!-- Modal Tambah/Edit Transaksi (pop-up) -->
+<!-- Modal Tambah Transaksi dengan Autocomplete Pembayar -->
 <div id="transaksiModal" class="modal-overlay">
     <div class="modal-card">
         <h3 id="transaksiModalTitle">Tambah Transaksi</h3>
         <input type="text" id="txDesc" placeholder="Deskripsi (contoh: Makan siang, Gaji)">
         <input type="number" id="txAmount" placeholder="Nominal" step="1000">
         <input type="date" id="txDate">
-        <select id="txPayer"><option value="">Pilih Pembayar</option></select>
+        <div class="input-with-button">
+            <input type="text" id="txPayer" list="payerList" placeholder="Pembayar (ketik atau pilih)" autocomplete="off">
+            <datalist id="payerList"></datalist>
+            <button type="button" id="btnAddNewPayer" class="btn-icon btn-small">+ Baru</button>
+        </div>
         <div class="modal-buttons">
             <button id="txModalCancel">Batal</button>
             <button id="txModalSave" class="btn-primary">Simpan</button>
@@ -403,25 +414,14 @@
         <input type="text" id="editDesc" placeholder="Deskripsi">
         <input type="number" id="editAmount" placeholder="Nominal">
         <input type="date" id="editDate">
-        <select id="editPayerSelect"></select>
+        <div class="input-with-button">
+            <input type="text" id="editPayer" list="editPayerList" placeholder="Pembayar" autocomplete="off">
+            <datalist id="editPayerList"></datalist>
+            <button type="button" id="btnEditAddNewPayer" class="btn-icon btn-small">+ Baru</button>
+        </div>
         <div class="modal-buttons">
             <button id="editTransCancel">Batal</button>
             <button id="editTransSave" class="btn-primary">Simpan</button>
-        </div>
-    </div>
-</div>
-
-<!-- Modal Kelola Pembayar (Tag) -->
-<div id="payerManagerModal" class="modal-overlay">
-    <div class="modal-card">
-        <h3>👥 Kelola Pembayar</h3>
-        <div id="payerListContainer" class="tag-manager"></div>
-        <div style="display: flex; gap: 8px; margin-top: 8px;">
-            <input type="text" id="newPayerName" placeholder="Nama pembayar baru" style="flex:1;">
-            <button id="addPayerBtn" class="btn-icon">+ Tambah</button>
-        </div>
-        <div class="modal-buttons">
-            <button id="closePayerManager">Tutup</button>
         </div>
     </div>
 </div>
@@ -445,9 +445,9 @@
     const ACCOUNTS_COLLECTION = "accounts";
 
     let currentAccount = null;
-    let availablePayers = []; // daftar orang (tag diganti)
+    let availablePayers = [];
     let currentEditTransactionId = null;
-    let pendingTransactionType = 'income'; // 'income' atau 'expense'
+    let pendingTransactionType = 'income';
 
     // DOM elements
     const accountsView = document.getElementById('accountsView');
@@ -469,8 +469,8 @@
     const transactionsListEl = document.getElementById('transactionsList');
     const filterStart = document.getElementById('filterStartDate');
     const filterEnd = document.getElementById('filterEndDate');
-    const filterPayerSelect = document.getElementById('filterPayerSelect');
-    const sortSelect = document.getElementById('sortSelect');
+    const sortField = document.getElementById('sortField');
+    const sortOrder = document.getElementById('sortOrder');
     const resetFilterBtn = document.getElementById('resetFilterBtn');
     const fixedButtonsDiv = document.getElementById('fixedButtons');
     const btnIncomeFloating = document.getElementById('btnIncomeFloating');
@@ -481,28 +481,19 @@
     const txAmount = document.getElementById('txAmount');
     const txDate = document.getElementById('txDate');
     const txPayer = document.getElementById('txPayer');
+    const payerList = document.getElementById('payerList');
+    const btnAddNewPayer = document.getElementById('btnAddNewPayer');
     const txModalCancel = document.getElementById('txModalCancel');
     const txModalSave = document.getElementById('txModalSave');
     const editTransModal = document.getElementById('editTransModal');
     const editDesc = document.getElementById('editDesc');
     const editAmount = document.getElementById('editAmount');
     const editDate = document.getElementById('editDate');
-    const editPayerSelect = document.getElementById('editPayerSelect');
+    const editPayer = document.getElementById('editPayer');
+    const editPayerList = document.getElementById('editPayerList');
+    const btnEditAddNewPayer = document.getElementById('btnEditAddNewPayer');
     const editTransCancel = document.getElementById('editTransCancel');
     const editTransSave = document.getElementById('editTransSave');
-    const payerManagerModal = document.getElementById('payerManagerModal');
-    const payerListContainer = document.getElementById('payerListContainer');
-    const newPayerName = document.getElementById('newPayerName');
-    const addPayerBtn = document.getElementById('addPayerBtn');
-    const closePayerManager = document.getElementById('closePayerManager');
-    const managePayerBtn = document.getElementById('manageTagBtn'); // kita buat baru? nanti disisipkan di dashboard header? kita tambah tombol kelola pembayar di filter bar
-    // Tambahkan tombol kelola pembayar di filter bar
-    const filterBar = document.querySelector('.filter-bar');
-    const managePayerButton = document.createElement('button');
-    managePayerButton.className = 'btn-icon';
-    managePayerButton.innerHTML = '👥 Kelola Pembayar';
-    managePayerButton.style.padding = '8px 12px';
-    filterBar.appendChild(managePayerButton);
 
     function showToast(msg) {
         const toast = document.getElementById('toastMsg');
@@ -558,7 +549,7 @@
         if(data.password !== pwd) throw new Error("Password salah");
         currentAccount = { id: accountId, ...data };
         availablePayers = currentAccount.payers || ["Diri sendiri", "Teman", "Keluarga"];
-        updatePayerSelects();
+        updatePayerDatalists();
         showDashboard();
     }
     function showDashboard() {
@@ -600,58 +591,22 @@
             showToast("Nama rekening diubah");
         }
     }
-    function updatePayerSelects() {
-        const options = '<option value="">Pilih Pembayar</option>' + availablePayers.map(p => `<option value="${escapeHtml(p)}">👤 ${escapeHtml(p)}</option>`).join('');
-        txPayer.innerHTML = options;
-        filterPayerSelect.innerHTML = '<option value="">Semua Pembayar</option>' + availablePayers.map(p => `<option value="${escapeHtml(p)}">👤 ${escapeHtml(p)}</option>`).join('');
-        editPayerSelect.innerHTML = options;
+    function updatePayerDatalists() {
+        const options = availablePayers.map(p => `<option value="${escapeHtml(p)}">`).join('');
+        payerList.innerHTML = options;
+        editPayerList.innerHTML = options;
     }
-    async function openPayerManager() {
-        renderPayerList();
-        payerManagerModal.classList.add('active');
-    }
-    function renderPayerList() {
-        if(!availablePayers.length) { payerListContainer.innerHTML = '<div class="small-text">Belum ada pembayar, tambahkan.</div>'; return; }
-        payerListContainer.innerHTML = availablePayers.map((payer, idx) => `<div class="tag-item">👤 ${escapeHtml(payer)} <button class="edit-payer" data-payer="${escapeHtml(payer)}">✏️</button> <button class="delete-payer" data-payer="${escapeHtml(payer)}">🗑️</button></div>`).join('');
-        document.querySelectorAll('.edit-payer').forEach(btn => btn.addEventListener('click', async () => {
-            const old = btn.dataset.payer;
-            const newName = prompt("Edit nama pembayar:", old);
-            if(newName && newName.trim() && newName !== old) {
-                const idx = availablePayers.indexOf(old);
-                if(idx !== -1) availablePayers[idx] = newName.trim();
-                currentAccount.transactions.forEach(tx => { if(tx.payer === old) tx.payer = newName.trim(); });
-                await updateAccountInFirebase();
-                updatePayerSelects();
-                renderFilteredTransactions();
-                renderPayerList();
-                showToast("Pembayar diupdate");
-            }
-        }));
-        document.querySelectorAll('.delete-payer').forEach(btn => btn.addEventListener('click', async () => {
-            const payer = btn.dataset.payer;
-            if(confirm(`Hapus "${payer}"? Transaksi dengan pembayar ini akan menjadi tanpa pembayar.`)) {
-                availablePayers = availablePayers.filter(p => p !== payer);
-                currentAccount.transactions.forEach(tx => { if(tx.payer === payer) tx.payer = ""; });
-                await updateAccountInFirebase();
-                updatePayerSelects();
-                renderFilteredTransactions();
-                renderPayerList();
-                showToast("Pembayar dihapus");
-            }
-        }));
-    }
-    async function addNewPayer() {
-        const newPayer = newPayerName.value.trim();
-        if(!newPayer) return;
-        if(availablePayers.includes(newPayer)) { showToast("Sudah ada"); return; }
+    async function addNewPayerFromInput(inputElement, datalistId) {
+        const newPayer = inputElement.value.trim();
+        if(!newPayer) { showToast("Masukkan nama pembayar"); return; }
+        if(availablePayers.includes(newPayer)) { showToast("Pembayar sudah ada"); return; }
         availablePayers.push(newPayer);
         await updateAccountInFirebase();
-        updatePayerSelects();
-        renderFilteredTransactions();
-        renderPayerList();
-        newPayerName.value = '';
-        showToast("Pembayar ditambahkan");
+        updatePayerDatalists();
+        showToast(`Pembayar "${newPayer}" ditambahkan`);
+        inputElement.value = newPayer;
     }
+
     // Pop-up tambah transaksi
     function openAddTransactionModal(type) {
         pendingTransactionType = type;
@@ -665,11 +620,17 @@
     async function saveNewTransaction() {
         const desc = txDesc.value.trim();
         let amount = parseFloat(txAmount.value);
-        const payer = txPayer.value;
+        const payer = txPayer.value.trim();
         let date = txDate.value;
         if(!desc) { showToast("Deskripsi wajib"); return; }
         if(isNaN(amount) || amount <= 0) { showToast("Nominal > 0"); return; }
         if(!date) date = new Date().toISOString().split('T')[0];
+        // Jika payer belum ada di daftar, tambahkan otomatis
+        if(payer && !availablePayers.includes(payer)) {
+            availablePayers.push(payer);
+            await updateAccountInFirebase();
+            updatePayerDatalists();
+        }
         const newTx = {
             id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
             description: desc,
@@ -684,22 +645,31 @@
         transaksiModal.classList.remove('active');
         showToast("Transaksi ditambahkan");
     }
+
+    // Sorting & filtering
     async function renderFilteredTransactions() {
         if(!currentAccount) return;
         let filtered = [...(currentAccount.transactions || [])];
         const start = filterStart.value, end = filterEnd.value;
         if(start) filtered = filtered.filter(t => new Date(t.date) >= new Date(start));
         if(end) filtered = filtered.filter(t => new Date(t.date) <= new Date(end + "T23:59:59"));
-        const selectedPayer = filterPayerSelect.value;
-        if(selectedPayer) filtered = filtered.filter(t => t.payer === selectedPayer);
-        const sortBy = sortSelect.value;
-        if(sortBy === 'newest') filtered.sort((a,b) => new Date(b.date) - new Date(a.date));
-        else if(sortBy === 'oldest') filtered.sort((a,b) => new Date(a.date) - new Date(b.date));
-        else if(sortBy === 'highest') filtered.sort((a,b) => b.amount - a.amount);
-        else if(sortBy === 'lowest') filtered.sort((a,b) => a.amount - b.amount);
+        
+        const field = sortField.value;
+        const order = sortOrder.value;
+        filtered.sort((a, b) => {
+            let valA, valB;
+            if(field === 'date') { valA = new Date(a.date); valB = new Date(b.date); }
+            else if(field === 'description') { valA = a.description.toLowerCase(); valB = b.description.toLowerCase(); }
+            else if(field === 'payer') { valA = (a.payer || '').toLowerCase(); valB = (b.payer || '').toLowerCase(); }
+            else if(field === 'amount') { valA = a.amount; valB = b.amount; }
+            if(order === 'asc') return valA > valB ? 1 : -1;
+            else return valA < valB ? 1 : -1;
+        });
+        
         let saldo = 0;
         (currentAccount.transactions || []).forEach(tx => { if(tx.type === 'income') saldo += tx.amount; else saldo -= tx.amount; });
         dashboardSaldo.innerText = formatRupiah(saldo);
+        
         if(!filtered.length) { transactionsListEl.innerHTML = '<div class="empty-trans">Tidak ada transaksi</div>'; return; }
         transactionsListEl.innerHTML = filtered.map(tx => `
             <div class="transaksi-item" data-id="${tx.id}">
@@ -743,26 +713,36 @@
         editDesc.value = tx.description;
         editAmount.value = tx.amount;
         editDate.value = tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0];
-        editPayerSelect.value = tx.payer || "";
+        editPayer.value = tx.payer || "";
         editTransModal.classList.add('active');
     }
     async function saveEditedTransaction() {
         const newDesc = editDesc.value.trim();
         const newAmount = parseFloat(editAmount.value);
-        const newPayer = editPayerSelect.value;
+        let newPayer = editPayer.value.trim();
         const newDate = editDate.value;
         if(!newDesc || isNaN(newAmount) || newAmount <= 0) { showToast("Data tidak valid"); return; }
+        if(newPayer && !availablePayers.includes(newPayer)) {
+            availablePayers.push(newPayer);
+            await updateAccountInFirebase();
+            updatePayerDatalists();
+        }
         const index = currentAccount.transactions.findIndex(t => t.id === currentEditTransactionId);
         if(index !== -1) {
-            const oldTx = currentAccount.transactions[index];
-            currentAccount.transactions[index] = { ...oldTx, description: newDesc, amount: Math.abs(newAmount), payer: newPayer || "", date: new Date(newDate).toISOString() };
+            currentAccount.transactions[index] = { ...currentAccount.transactions[index], description: newDesc, amount: Math.abs(newAmount), payer: newPayer || "", date: new Date(newDate).toISOString() };
             await updateAccountInFirebase();
             renderFilteredTransactions();
             showToast("Transaksi diupdate");
         }
         editTransModal.classList.remove('active');
     }
-    function resetFilters() { filterStart.value = ''; filterEnd.value = ''; filterPayerSelect.value = ''; sortSelect.value = 'newest'; renderFilteredTransactions(); }
+    function resetFilters() {
+        filterStart.value = '';
+        filterEnd.value = '';
+        sortField.value = 'date';
+        sortOrder.value = 'desc';
+        renderFilteredTransactions();
+    }
 
     // Event listeners
     btnTambahRekening.addEventListener('click', () => { modalTitle.innerText = "Rekening Baru"; modalInputName.style.display = 'block'; modalInputPassword.value = ''; modalInputName.value = ''; modal.dataset.mode = 'create'; modal.classList.add('active'); });
@@ -786,11 +766,10 @@
     resetFilterBtn.addEventListener('click', resetFilters);
     filterStart.addEventListener('change', renderFilteredTransactions);
     filterEnd.addEventListener('change', renderFilteredTransactions);
-    filterPayerSelect.addEventListener('change', renderFilteredTransactions);
-    sortSelect.addEventListener('change', renderFilteredTransactions);
-    managePayerButton.addEventListener('click', openPayerManager);
-    addPayerBtn.addEventListener('click', addNewPayer);
-    closePayerManager.addEventListener('click', () => payerManagerModal.classList.remove('active'));
+    sortField.addEventListener('change', renderFilteredTransactions);
+    sortOrder.addEventListener('change', renderFilteredTransactions);
+    btnAddNewPayer.addEventListener('click', () => addNewPayerFromInput(txPayer, 'payerList'));
+    btnEditAddNewPayer.addEventListener('click', () => addNewPayerFromInput(editPayer, 'editPayerList'));
 
     window.addEventListener('DOMContentLoaded', () => { loadAccounts(); });
 </script>
