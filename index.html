@@ -48,15 +48,17 @@
         }
         .transaksi-item {
             display: flex; justify-content: space-between; align-items: center; padding: 14px 12px; border-bottom: 1px solid #f0f2f5;
+            cursor: pointer;
         }
         .transaksi-detail { flex: 1; }
         .transaksi-deskripsi { font-weight: 500; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
         .payer-badge { background: #eef2ff; padding: 2px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: 500; color: #1e4a6b; display: inline-flex; align-items: center; gap: 4px; }
         .transaksi-tanggal { font-size: 0.7rem; color: #94a3b8; }
         .transaksi-nominal { font-weight: 700; font-size: 1rem; }
+        .collective-badge { background: #fef3c7; padding: 2px 8px; border-radius: 30px; font-size: 0.65rem; font-weight: 500; color: #b45309; margin-left: 6px; }
         .income { color: #15803d; }
         .expense { color: #b91c1c; }
-        .action-buttons { display: flex; gap: 6px; }
+        .action-buttons { display: flex; gap: 6px; align-items: center; }
         .edit-trans, .delete-trans { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 6px; border-radius: 30px; }
         .empty-trans { text-align: center; padding: 40px; color: #94a3b8; }
         .fixed-bottom-buttons {
@@ -111,6 +113,7 @@
             display: flex; justify-content: space-between; align-items: center;
             background: #f8fafc; padding: 10px 16px; border-radius: 60px; margin-bottom: 8px;
         }
+        .detail-item { padding: 8px 0; border-bottom: 1px solid #eef2ff; display: flex; justify-content: space-between; }
     </style>
 </head>
 <body>
@@ -172,7 +175,7 @@
 <div id="transaksiModal" class="modal-overlay">
     <div class="modal-card">
         <h3 id="transaksiModalTitle">Tambah Transaksi</h3>
-        <textarea id="txRawText" placeholder="Contoh single:&#10;Buku tulis 5 lembar 50.000&#10;&#10;Contoh kolektif:&#10;ATK&#10;Kertas A4 20 rim 25rb&#10;Kertas F4 5 rim 35.000&#10;Penggaris 600 buah 35000"></textarea>
+        <textarea id="txRawText" placeholder="Contoh single:&#10;Buku tulis 5 lembar 50.000&#10;Makan 5000&#10;Makan 5rb&#10;Makan 5ribu&#10;Makan 5k&#10;&#10;Contoh kolektif (baris pertama judul):&#10;Konsumsi&#10;makan 50000&#10;minum 5rb&#10;kopi 2 dus 7.000&#10;sayur 4 mangkuk 8000&#10;kopi hitam 5ribu&#10;air 7k"></textarea>
         <div class="input-with-button">
             <input type="text" id="txPayer" list="payerList" placeholder="Pembayar (opsional)" autocomplete="off">
             <datalist id="payerList"></datalist>
@@ -183,23 +186,31 @@
     </div>
 </div>
 
-<!-- Modal Edit Transaksi (sederhana) -->
+<!-- Modal Detail Transaksi (kolektif) -->
+<div id="detailModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3 id="detailTitle">Detail Transaksi</h3>
+        <div id="detailContent"></div>
+        <div class="modal-buttons"><button id="closeDetailBtn">Tutup</button></div>
+    </div>
+</div>
+
+<!-- Modal Edit Transaksi (dengan textarea untuk kolektif) -->
 <div id="editTransModal" class="modal-overlay">
     <div class="modal-card">
         <h3>Edit Transaksi</h3>
-        <input type="text" id="editDesc" placeholder="Deskripsi">
-        <input type="number" id="editAmount" placeholder="Nominal">
-        <input type="date" id="editDate">
+        <textarea id="editRawText" placeholder="Format sama seperti saat tambah" rows="6"></textarea>
         <div class="input-with-button">
             <input type="text" id="editPayer" list="editPayerList" placeholder="Pembayar">
             <datalist id="editPayerList"></datalist>
             <button type="button" id="btnEditAddNewPayer" class="btn-icon btn-small">+ Baru</button>
         </div>
+        <input type="date" id="editDate">
         <div class="modal-buttons"><button id="editTransCancel">Batal</button><button id="editTransSave" class="btn-primary">Simpan</button></div>
     </div>
 </div>
 
-<!-- Modal Kelola Pembayar (dengan hapus) -->
+<!-- Modal Kelola Pembayar -->
 <div id="payerManagerModal" class="modal-overlay">
     <div class="modal-card">
         <h3>👥 Kelola Pembayar</h3>
@@ -235,7 +246,7 @@
     let currentEditTransactionId = null;
     let pendingTransactionType = 'income';
 
-    // DOM elements (sama seperti sebelumnya, tidak perlu diubah)
+    // DOM elements (singkat)
     const accountsView = document.getElementById('accountsView');
     const dashboardView = document.getElementById('dashboardView');
     const accountsListEl = document.getElementById('accountsList');
@@ -271,12 +282,11 @@
     const txModalCancel = document.getElementById('txModalCancel');
     const txModalSave = document.getElementById('txModalSave');
     const editTransModal = document.getElementById('editTransModal');
-    const editDesc = document.getElementById('editDesc');
-    const editAmount = document.getElementById('editAmount');
-    const editDate = document.getElementById('editDate');
+    const editRawText = document.getElementById('editRawText');
     const editPayer = document.getElementById('editPayer');
     const editPayerList = document.getElementById('editPayerList');
     const btnEditAddNewPayer = document.getElementById('btnEditAddNewPayer');
+    const editDate = document.getElementById('editDate');
     const editTransCancel = document.getElementById('editTransCancel');
     const editTransSave = document.getElementById('editTransSave');
     const payerManagerModal = document.getElementById('payerManagerModal');
@@ -285,81 +295,114 @@
     const addNewPayerBtn = document.getElementById('addNewPayerBtn');
     const closePayerManager = document.getElementById('closePayerManager');
     const managePayerBtn = document.getElementById('managePayerBtn');
+    const detailModal = document.getElementById('detailModal');
+    const detailTitle = document.getElementById('detailTitle');
+    const detailContent = document.getElementById('detailContent');
+    const closeDetailBtn = document.getElementById('closeDetailBtn');
 
     function showToast(msg) { const toast = document.getElementById('toastMsg'); toast.textContent = msg; toast.style.opacity = '1'; setTimeout(() => toast.style.opacity = '0', 2000); }
     function formatRupiah(angka) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka); }
     function formatDate(iso) { if(!iso) return "-"; const d = new Date(iso); return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }); }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-    // Fungsi ekstrak nominal dari string, mengembalikan { value, lastIndex } atau null
-    function extractNominalWithPosition(text) {
-        // Pola: angka dengan pemisah titik/koma, diikuti opsional spasi dan rb/ribu/k, atau sebaliknya
-        const regex = /(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?)\s*(rb|ribu|k)?/gi;
-        let matches = [...text.matchAll(regex)];
-        if (matches.length === 0) return null;
-        // Ambil yang terakhir (paling kanan) sebagai nominal utama
-        const last = matches[matches.length - 1];
-        let numStr = last[1].replace(/\./g, '').replace(/,/g, '');
-        let num = parseFloat(numStr);
+    // ========== FUNGSI PARSING NOMINAL YANG BENAR ==========
+    // Mengkonversi string nominal (misal "5000", "5rb", "7.000", "5ribu") menjadi angka
+    function parseNominalString(nominalStr) {
+        let clean = nominalStr.toLowerCase().trim();
+        // Cek suffix
+        let multiplier = 1;
+        if (clean.endsWith('rb') || clean.endsWith('ribu')) {
+            multiplier = 1000;
+            clean = clean.replace(/(rb|ribu)$/, '');
+        } else if (clean.endsWith('k')) {
+            multiplier = 1000;
+            clean = clean.replace(/k$/, '');
+        }
+        // Hapus titik dan koma pemisah ribuan
+        clean = clean.replace(/\./g, '').replace(/,/g, '');
+        let num = parseFloat(clean);
         if (isNaN(num)) return null;
-        const suffix = last[2] ? last[2].toLowerCase() : '';
-        if (suffix === 'rb' || suffix === 'ribu' || suffix === 'k') num *= 1000;
-        return { value: num, matchText: last[0], index: last.index };
+        return num * multiplier;
     }
 
-    // Parsing teks transaksi single line (atau gabungan) dengan cerdas
-    function parseSingleLine(text) {
-        let nominalInfo = extractNominalWithPosition(text);
-        if (!nominalInfo) throw new Error("Tidak ditemukan nominal. Contoh: 'Buku 50.000'");
-        let description = text.replace(nominalInfo.matchText, '').trim();
-        // Hapus spasi berlebih dan jika kosong beri default
-        if (!description) description = pendingTransactionType === 'income' ? 'Pemasukan' : 'Pengeluaran';
-        return { description, amount: nominalInfo.value };
-    }
-
-    // Parsing teks multi baris (kolektif)
-    function parseCollective(lines) {
-        // Cek baris pertama apakah mengandung nominal
-        let firstLineNominal = extractNominalWithPosition(lines[0]);
-        let title = "";
-        let startIdx = 0;
-        if (firstLineNominal === null) {
-            title = lines[0].trim();
-            startIdx = 1;
-        } else {
-            title = "NN";
-            startIdx = 0;
+    // Ekstrak nominal dari sebuah baris: ambil kata terakhir, jika itu adalah nominal maka hapus, sisanya deskripsi
+    function extractNominalFromLine(line) {
+        let words = line.trim().split(/\s+/);
+        if (words.length === 0) return null;
+        let lastWord = words[words.length - 1];
+        let nominal = parseNominalString(lastWord);
+        if (nominal !== null) {
+            // Hapus kata terakhir
+            let description = words.slice(0, -1).join(' ');
+            return { value: nominal, description: description, matchText: lastWord };
         }
-        let totalAmount = 0;
-        for (let i = startIdx; i < lines.length; i++) {
-            let nom = extractNominalWithPosition(lines[i]);
-            if (nom) totalAmount += nom.value;
-        }
-        if (totalAmount === 0) throw new Error("Tidak ada nominal valid dalam kolektif");
-        return { description: title, amount: totalAmount };
+        return null;
     }
 
-    // Fungsi utama parsing teks transaksi (mendukung single line dan multi line kolektif)
+    // Parsing teks transaksi (single atau kolektif)
     function parseTransactionText(rawText, type) {
         const lines = rawText.split(/\r?\n/).filter(l => l.trim().length > 0);
         if (lines.length === 0) throw new Error("Teks kosong");
-        // Deteksi multi line kolektif: jika lebih dari 1 baris, dan minimal 2 baris memiliki nominal atau baris pertama tanpa nominal
-        let hasNominalPerBaris = lines.map(l => extractNominalWithPosition(l) !== null);
-        let anyNominal = hasNominalPerBaris.some(v => v === true);
-        if (lines.length === 1 || !anyNominal) {
-            // Gabungkan semua baris jika multi line tapi tidak ada nominal? (fallback)
-            let combined = lines.join(' ');
-            return parseSingleLine(combined);
+        
+        // Cek apakah baris pertama memiliki nominal (single line) atau tidak (kolektif dengan judul)
+        const firstLineNominal = extractNominalFromLine(lines[0]);
+        
+        if (lines.length === 1 || firstLineNominal === null) {
+            // Single line atau kolektif dengan judul di baris pertama
+            if (lines.length === 1) {
+                // Single line: harus ada nominal
+                const nominalInfo = extractNominalFromLine(lines[0]);
+                if (!nominalInfo) throw new Error("Tidak ditemukan nominal. Contoh: 'Buku 50.000'");
+                let description = nominalInfo.description;
+                if (!description) description = type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+                return { description, amount: nominalInfo.value, items: null, isCollective: false };
+            } else {
+                // Kolektif: baris pertama adalah judul (tanpa nominal)
+                const title = lines[0].trim();
+                if (!title) throw new Error("Judul transaksi kolektif tidak boleh kosong");
+                const items = [];
+                let total = 0;
+                for (let i = 1; i < lines.length; i++) {
+                    const line = lines[i];
+                    const nominalInfo = extractNominalFromLine(line);
+                    if (!nominalInfo) throw new Error(`Baris "${line}" tidak memiliki nominal yang valid`);
+                    let itemName = nominalInfo.description;
+                    if (!itemName) itemName = `Item ${i}`;
+                    items.push({ name: itemName, amount: nominalInfo.value });
+                    total += nominalInfo.value;
+                }
+                if (items.length === 0) throw new Error("Tidak ada item dalam kolektif");
+                return { description: title, amount: total, items, isCollective: true };
+            }
         } else {
-            // Multi baris dengan setidaknya satu nominal di baris kedua dst -> kolektif
-            return parseCollective(lines);
+            // Baris pertama punya nominal, tapi ini multi baris? Maka dianggap single line gabungan
+            // Gabungkan semua baris
+            const combined = lines.join(' ');
+            const nominalInfo = extractNominalFromLine(combined);
+            if (!nominalInfo) throw new Error("Tidak ditemukan nominal");
+            let description = nominalInfo.description;
+            if (!description) description = type === 'income' ? 'Pemasukan' : 'Pengeluaran';
+            return { description, amount: nominalInfo.value, items: null, isCollective: false };
         }
     }
 
-    // Fungsi load accounts dll (sama seperti sebelumnya)
+    // Helper untuk menghasilkan teks representasi transaksi (untuk edit)
+    function transactionToRawText(tx) {
+        if (tx.items && tx.items.length > 0) {
+            let result = tx.description + "\n";
+            for (const item of tx.items) {
+                result += `${item.name} ${item.amount}\n`;
+            }
+            return result.trim();
+        } else {
+            return `${tx.description} ${tx.amount}`;
+        }
+    }
+
+    // Fungsi load accounts (sama seperti sebelumnya)
     async function loadAccounts() {
         try { const snap = await getDocs(collection(db, ACCOUNTS_COLLECTION)); const accounts = []; snap.forEach(d => accounts.push({ id: d.id, ...d.data() })); renderAccountsList(accounts); } 
-        catch(e) { showToast("Gagal muat rekening"); }
+        catch(e) { showToast("Gagal muat rekening: " + e.message); }
     }
     function renderAccountsList(accounts) {
         if(!accounts.length) { accountsListEl.innerHTML = '<div class="loading">✨ Belum ada rekening. + Rekening Baru</div>'; return; }
@@ -379,7 +422,7 @@
     async function addNewPayerFromInput(inputElement) { const newPayer = inputElement.value.trim(); if(!newPayer) { showToast("Masukkan nama pembayar"); return; } if(availablePayers.includes(newPayer)) { showToast("Pembayar sudah ada"); return; } availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); showToast(`Pembayar "${newPayer}" ditambahkan`); inputElement.value = newPayer; }
     
     async function openPayerManager() { renderPayerList(); payerManagerModal.classList.add('active'); }
-    function renderPayerList() { if(!availablePayers.length) { payerListContainer.innerHTML = '<div class="small-text">Belum ada pembayar, tambahkan.</div>'; return; } payerListContainer.innerHTML = availablePayers.map(p => `<div class="payer-list-item"><span>👤 ${escapeHtml(p)}</span><button class="delete-payer-btn" data-payer="${escapeHtml(p)}" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">🗑️</button></div>`).join(''); document.querySelectorAll('.delete-payer-btn').forEach(btn => btn.addEventListener('click', async () => { const payer = btn.dataset.payer; if(confirm(`Hapus pembayar "${payer}"? Transaksi dengan pembayar ini akan menjadi kosong.`)) { availablePayers = availablePayers.filter(p => p !== payer); currentAccount.transactions.forEach(tx => { if(tx.payer === payer) tx.payer = ""; }); await updateAccountInFirebase(); updatePayerDatalists(); renderFilteredTransactions(); renderPayerList(); showToast("Pembayar dihapus"); } })); }
+    function renderPayerList() { if(!availablePayers.length) { payerListContainer.innerHTML = '<div class="small-text">Belum ada pembayar, tambahkan.</div>'; return; } payerListContainer.innerHTML = availablePayers.map(p => `<div class="payer-list-item"><span>👤 ${escapeHtml(p)}</span><button class="delete-payer-btn" data-payer="${escapeHtml(p)}" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">🗑️</button></div>`).join(''); document.querySelectorAll('.delete-payer-btn').forEach(btn => btn.addEventListener('click', async () => { const payer = btn.dataset.payer; if(confirm(`Hapus pembayar "${payer}"?`)) { availablePayers = availablePayers.filter(p => p !== payer); currentAccount.transactions.forEach(tx => { if(tx.payer === payer) tx.payer = ""; }); await updateAccountInFirebase(); updatePayerDatalists(); renderFilteredTransactions(); renderPayerList(); showToast("Pembayar dihapus"); } })); }
     async function addNewPayerGlobal() { const newPayer = newPayerName.value.trim(); if(!newPayer) return; if(availablePayers.includes(newPayer)) { showToast("Sudah ada"); return; } availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); renderFilteredTransactions(); renderPayerList(); newPayerName.value = ''; showToast("Pembayar ditambahkan"); }
     
     function openAddTransactionModal(type) {
@@ -399,7 +442,16 @@
         let date = txDate.value;
         if(!date) date = new Date().toISOString().split('T')[0];
         if(payer && !availablePayers.includes(payer)) { availablePayers.push(payer); await updateAccountInFirebase(); updatePayerDatalists(); }
-        const newTx = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), description: parsed.description, amount: parsed.amount, type: pendingTransactionType, payer: payer || "", date: new Date(date).toISOString() };
+        const newTx = { 
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 5), 
+            description: parsed.description, 
+            amount: parsed.amount, 
+            type: pendingTransactionType, 
+            payer: payer || "", 
+            date: new Date(date).toISOString(),
+            items: parsed.items || null,
+            isCollective: parsed.isCollective || false
+        };
         currentAccount.transactions = [newTx, ...(currentAccount.transactions || [])];
         await updateAccountInFirebase();
         renderFilteredTransactions();
@@ -418,12 +470,83 @@
         let saldo = 0; (currentAccount.transactions || []).forEach(tx => { if(tx.type === 'income') saldo += tx.amount; else saldo -= tx.amount; });
         dashboardSaldo.innerText = formatRupiah(saldo);
         if(!filtered.length) { transactionsListEl.innerHTML = '<div class="empty-trans">Tidak ada transaksi</div>'; return; }
-        transactionsListEl.innerHTML = filtered.map(tx => `<div class="transaksi-item" data-id="${tx.id}"><div class="transaksi-detail"><div class="transaksi-deskripsi">${escapeHtml(tx.description)}${tx.payer ? `<span class="payer-badge">👤 ${escapeHtml(tx.payer)}</span>` : ''}<div class="transaksi-tanggal">${formatDate(tx.date)}</div></div></div><div style="display:flex; align-items:center; gap:8px;"><span class="transaksi-nominal ${tx.type === 'income' ? 'income' : 'expense'}">${tx.type === 'income' ? '+' : '-'} ${formatRupiah(tx.amount)}</span><div class="action-buttons"><button class="edit-trans" data-id="${tx.id}">✏️</button><button class="delete-trans" data-id="${tx.id}">🗑️</button></div></div></div>`).join('');
+        transactionsListEl.innerHTML = filtered.map(tx => `
+            <div class="transaksi-item" data-id="${tx.id}">
+                <div class="transaksi-detail">
+                    <div class="transaksi-deskripsi">
+                        ${escapeHtml(tx.description)}${tx.isCollective ? '<span class="collective-badge">📋 Kolektif</span>' : ''}
+                        ${tx.payer ? `<span class="payer-badge">👤 ${escapeHtml(tx.payer)}</span>` : ''}
+                        <div class="transaksi-tanggal">${formatDate(tx.date)}</div>
+                    </div>
+                </div>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="transaksi-nominal ${tx.type === 'income' ? 'income' : 'expense'}">
+                        ${tx.type === 'income' ? '+' : '-'} ${formatRupiah(tx.amount)}
+                    </span>
+                    <div class="action-buttons">
+                        <button class="edit-trans" data-id="${tx.id}">✏️</button>
+                        <button class="delete-trans" data-id="${tx.id}">🗑️</button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        document.querySelectorAll('.transaksi-item').forEach(el => {
+            const id = el.dataset.id;
+            el.addEventListener('click', (e) => {
+                if(e.target.classList.contains('edit-trans') || e.target.classList.contains('delete-trans')) return;
+                const tx = currentAccount.transactions.find(t => t.id === id);
+                if(tx && tx.isCollective && tx.items) showDetailModal(tx);
+                else if(tx && !tx.isCollective) showToast("Transaksi biasa, tidak memiliki rincian");
+            });
+        });
         document.querySelectorAll('.delete-trans').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); const id = btn.dataset.id; if(confirm("Hapus transaksi?")) { currentAccount.transactions = currentAccount.transactions.filter(t => t.id !== id); await updateAccountInFirebase(); renderFilteredTransactions(); showToast("Dihapus"); } }));
         document.querySelectorAll('.edit-trans').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.id; const tx = currentAccount.transactions.find(t => t.id === id); if(tx) openEditModal(tx); }));
     }
-    function openEditModal(tx) { currentEditTransactionId = tx.id; editDesc.value = tx.description; editAmount.value = tx.amount; editDate.value = tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0]; editPayer.value = tx.payer || ""; editTransModal.classList.add('active'); }
-    async function saveEditedTransaction() { const newDesc = editDesc.value.trim(); const newAmount = parseFloat(editAmount.value); let newPayer = editPayer.value.trim(); const newDate = editDate.value; if(!newDesc || isNaN(newAmount) || newAmount <= 0) { showToast("Data tidak valid"); return; } if(newPayer && !availablePayers.includes(newPayer)) { availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); } const index = currentAccount.transactions.findIndex(t => t.id === currentEditTransactionId); if(index !== -1) { currentAccount.transactions[index] = { ...currentAccount.transactions[index], description: newDesc, amount: Math.abs(newAmount), payer: newPayer || "", date: new Date(newDate).toISOString() }; await updateAccountInFirebase(); renderFilteredTransactions(); showToast("Transaksi diupdate"); } editTransModal.classList.remove('active'); }
+    function showDetailModal(tx) {
+        detailTitle.innerText = `Detail: ${tx.description}`;
+        let html = `<div style="margin-bottom:12px;"><strong>Total:</strong> ${formatRupiah(tx.amount)}</div>`;
+        html += `<div style="margin-top:8px;"><strong>Rincian:</strong></div>`;
+        for (const item of tx.items) {
+            html += `<div class="detail-item"><span>${escapeHtml(item.name)}</span><span>${formatRupiah(item.amount)}</span></div>`;
+        }
+        detailContent.innerHTML = html;
+        detailModal.classList.add('active');
+    }
+    closeDetailBtn.addEventListener('click', () => detailModal.classList.remove('active'));
+    
+    function openEditModal(tx) {
+        currentEditTransactionId = tx.id;
+        const rawText = transactionToRawText(tx);
+        editRawText.value = rawText;
+        editPayer.value = tx.payer || "";
+        editDate.value = tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0];
+        editTransModal.classList.add('active');
+    }
+    async function saveEditedTransaction() {
+        const rawText = editRawText.value.trim();
+        if(!rawText) { showToast("Masukkan teks transaksi"); return; }
+        let parsed;
+        try { parsed = parseTransactionText(rawText, currentAccount.transactions.find(t => t.id === currentEditTransactionId).type); } catch(e) { showToast(e.message); return; }
+        let newPayer = editPayer.value.trim();
+        const newDate = editDate.value;
+        if(newPayer && !availablePayers.includes(newPayer)) { availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); }
+        const index = currentAccount.transactions.findIndex(t => t.id === currentEditTransactionId);
+        if(index !== -1) {
+            currentAccount.transactions[index] = { 
+                ...currentAccount.transactions[index], 
+                description: parsed.description, 
+                amount: parsed.amount, 
+                payer: newPayer || "", 
+                date: new Date(newDate).toISOString(),
+                items: parsed.items || null,
+                isCollective: parsed.isCollective || false
+            };
+            await updateAccountInFirebase();
+            renderFilteredTransactions();
+            showToast("Transaksi diupdate");
+        }
+        editTransModal.classList.remove('active');
+    }
     function resetFilters() { filterStart.value = ''; filterEnd.value = ''; sortField.value = 'date'; sortOrder.value = 'desc'; renderFilteredTransactions(); }
 
     // Event listeners
