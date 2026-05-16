@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>Dompet NBS - Catatan Keuangan Pintar</title>
-    <!-- html2pdf.js library untuk export PDF -->
+    <!-- html2pdf.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js" integrity="sha512-GsLlZN/3F2ErC5ifS5QtgpiJtWd43JWSuIgh7mbzZ8zBps+dvLusV+eNQATqgA/HdeKFVgA5v3S/cIrLF7QnIg==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -33,7 +33,6 @@
         }
         .rekening-title { font-size: 1.3rem; font-weight: 600; color: #475569; margin-bottom: 8px; }
         .saldo { font-size: 2.4rem; font-weight: 800; color: #0f3a55; margin: 8px 0; }
-        /* Ringkasan keuangan */
         .summary-stats {
             display: flex;
             justify-content: space-between;
@@ -144,7 +143,6 @@
             background: #f8fafc; padding: 10px 16px; border-radius: 60px; margin-bottom: 8px;
         }
         .detail-item { padding: 8px 0; border-bottom: 1px solid #eef2ff; display: flex; justify-content: space-between; }
-        /* Styling untuk PDF export */
         @media print {
             body { background: white; padding: 0; margin: 0; }
             .fixed-bottom-buttons, .action-buttons, .edit-trans, .delete-trans, .btn-icon, .filter-bar, .action-row button, #managePayerBtn, #resetFilterBtn, .float-btn, .toast-message, .modal-overlay { display: none !important; }
@@ -163,8 +161,7 @@
         <div class="dashboard-header">
             <div class="rekening-title" id="dashboardNamaRekening">-</div>
             <div class="saldo" id="dashboardSaldo">Rp0</div>
-            <!-- Ringkasan Total Pemasukan, Total Pengeluaran, Saldo -->
-            <div class="summary-stats" id="summaryStats">
+            <div class="summary-stats">
                 <div class="stat-card stat-income">
                     <div class="stat-label">💚 Total Pemasukan</div>
                     <div class="stat-value" id="totalIncome">Rp0</div>
@@ -183,6 +180,7 @@
                 <button class="btn-icon btn-outline" id="editAccountBtn">✏️ Edit Rekening</button>
                 <button class="btn-icon btn-danger" id="deleteAccountBtn">🗑️ Hapus</button>
                 <button class="btn-icon btn-primary" id="exportPdfBtn">📄 Export PDF</button>
+                <button class="btn-icon btn-primary" id="exportBkuBtn">📊 Buku Kas Umum</button>
             </div>
         </div>
         <div class="filter-bar">
@@ -213,6 +211,27 @@
     <button class="float-btn btn-expense" id="btnExpenseFloating">➖ Pengeluaran</button>
 </div>
 
+<!-- Modal untuk pilih bulan dan tahun BKU -->
+<div id="bkuModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3>📊 Buku Kas Umum</h3>
+        <select id="bkuMonth" style="margin-bottom: 12px;">
+            <option value="1">Januari</option><option value="2">Februari</option><option value="3">Maret</option>
+            <option value="4">April</option><option value="5">Mei</option><option value="6">Juni</option>
+            <option value="7">Juli</option><option value="8">Agustus</option><option value="9">September</option>
+            <option value="10">Oktober</option><option value="11">November</option><option value="12">Desember</option>
+        </select>
+        <select id="bkuYear">
+            <option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option>
+            <option value="2026">2026</option><option value="2027">2027</option>
+        </select>
+        <div class="modal-buttons" style="margin-top: 20px;">
+            <button id="bkuCancelBtn">Batal</button>
+            <button id="bkuGenerateBtn" class="btn-primary">Cetak BKU</button>
+        </div>
+    </div>
+</div>
+
 <!-- Modal Login / Buat Rekening -->
 <div id="modalOverlay" class="modal-overlay">
     <div class="modal-card">
@@ -224,7 +243,7 @@
     </div>
 </div>
 
-<!-- Modal Transaksi Pintar (textarea) -->
+<!-- Modal Transaksi Pintar -->
 <div id="transaksiModal" class="modal-overlay">
     <div class="modal-card">
         <h3 id="transaksiModalTitle">Tambah Transaksi</h3>
@@ -248,7 +267,7 @@
     </div>
 </div>
 
-<!-- Modal Edit Transaksi (dengan textarea untuk kolektif) -->
+<!-- Modal Edit Transaksi -->
 <div id="editTransModal" class="modal-overlay">
     <div class="modal-card">
         <h3>Edit Transaksi</h3>
@@ -315,6 +334,7 @@
     const editAccountBtn = document.getElementById('editAccountBtn');
     const deleteAccountBtn = document.getElementById('deleteAccountBtn');
     const exportPdfBtn = document.getElementById('exportPdfBtn');
+    const exportBkuBtn = document.getElementById('exportBkuBtn');
     const dashboardNama = document.getElementById('dashboardNamaRekening');
     const dashboardSaldo = document.getElementById('dashboardSaldo');
     const totalIncomeEl = document.getElementById('totalIncome');
@@ -356,23 +376,24 @@
     const detailTitle = document.getElementById('detailTitle');
     const detailContent = document.getElementById('detailContent');
     const closeDetailBtn = document.getElementById('closeDetailBtn');
+    // Elemen BKU modal
+    const bkuModal = document.getElementById('bkuModal');
+    const bkuMonth = document.getElementById('bkuMonth');
+    const bkuYear = document.getElementById('bkuYear');
+    const bkuCancelBtn = document.getElementById('bkuCancelBtn');
+    const bkuGenerateBtn = document.getElementById('bkuGenerateBtn');
 
     function showToast(msg) { const toast = document.getElementById('toastMsg'); toast.textContent = msg; toast.style.opacity = '1'; setTimeout(() => toast.style.opacity = '0', 2000); }
     function formatRupiah(angka) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka); }
-    function formatDate(iso) { if(!iso) return "-"; const d = new Date(iso); return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }); }
+    function formatDate(iso, withYear = true) { if(!iso) return "-"; const d = new Date(iso); return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year: withYear ? 'numeric' : undefined }); }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
-    // ========== FUNGSI PARSING NOMINAL ==========
+    // ========== Fungsi parsing nominal (sama seperti sebelumnya) ==========
     function parseNominalString(nominalStr) {
         let clean = nominalStr.toLowerCase().trim();
         let multiplier = 1;
-        if (clean.endsWith('rb') || clean.endsWith('ribu')) {
-            multiplier = 1000;
-            clean = clean.replace(/(rb|ribu)$/, '');
-        } else if (clean.endsWith('k')) {
-            multiplier = 1000;
-            clean = clean.replace(/k$/, '');
-        }
+        if (clean.endsWith('rb') || clean.endsWith('ribu')) { multiplier = 1000; clean = clean.replace(/(rb|ribu)$/, ''); }
+        else if (clean.endsWith('k')) { multiplier = 1000; clean = clean.replace(/k$/, ''); }
         clean = clean.replace(/\./g, '').replace(/,/g, '');
         let num = parseFloat(clean);
         if (isNaN(num)) return null;
@@ -429,13 +450,9 @@
     function transactionToRawText(tx) {
         if (tx.items && tx.items.length > 0) {
             let result = tx.description + "\n";
-            for (const item of tx.items) {
-                result += `${item.name} ${item.amount}\n`;
-            }
+            for (const item of tx.items) result += `${item.name} ${item.amount}\n`;
             return result.trim();
-        } else {
-            return `${tx.description} ${tx.amount}`;
-        }
+        } else return `${tx.description} ${tx.amount}`;
     }
 
     // Fungsi load accounts (sama seperti sebelumnya)
@@ -465,9 +482,7 @@
     function openAddTransactionModal(type) {
         pendingTransactionType = type;
         transaksiModalTitle.innerText = type === 'income' ? '➕ Tambah Pemasukan' : '➖ Tambah Pengeluaran';
-        txRawText.value = '';
-        txPayer.value = '';
-        txDate.value = new Date().toISOString().split('T')[0];
+        txRawText.value = ''; txPayer.value = ''; txDate.value = new Date().toISOString().split('T')[0];
         transaksiModal.classList.add('active');
     }
     async function saveNewTransaction() {
@@ -479,23 +494,13 @@
         let date = txDate.value;
         if(!date) date = new Date().toISOString().split('T')[0];
         if(payer && !availablePayers.includes(payer)) { availablePayers.push(payer); await updateAccountInFirebase(); updatePayerDatalists(); }
-        const newTx = { 
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 5), 
-            description: parsed.description, 
-            amount: parsed.amount, 
-            type: pendingTransactionType, 
-            payer: payer || "", 
-            date: new Date(date).toISOString(),
-            items: parsed.items || null,
-            isCollective: parsed.isCollective || false
-        };
+        const newTx = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), description: parsed.description, amount: parsed.amount, type: pendingTransactionType, payer: payer || "", date: new Date(date).toISOString(), items: parsed.items || null, isCollective: parsed.isCollective || false };
         currentAccount.transactions = [newTx, ...(currentAccount.transactions || [])];
         await updateAccountInFirebase();
         renderFilteredTransactions();
         transaksiModal.classList.remove('active');
         showToast(`Transaksi ${pendingTransactionType === 'income' ? 'pemasukan' : 'pengeluaran'} ditambahkan (Rp ${parsed.amount.toLocaleString()})`);
     }
-    
     async function renderFilteredTransactions() {
         if(!currentAccount) return;
         let filtered = [...(currentAccount.transactions || [])];
@@ -504,8 +509,6 @@
         if(end) filtered = filtered.filter(t => new Date(t.date) <= new Date(end + "T23:59:59"));
         const field = sortField.value, order = sortOrder.value;
         filtered.sort((a,b) => { let valA, valB; if(field === 'date') { valA = new Date(a.date); valB = new Date(b.date); } else if(field === 'description') { valA = a.description.toLowerCase(); valB = b.description.toLowerCase(); } else if(field === 'payer') { valA = (a.payer || '').toLowerCase(); valB = (b.payer || '').toLowerCase(); } else { valA = a.amount; valB = b.amount; } if(order === 'asc') return valA > valB ? 1 : -1; else return valA < valB ? 1 : -1; });
-        
-        // Hitung total pemasukan, pengeluaran, saldo
         let totalInc = 0, totalExp = 0;
         (currentAccount.transactions || []).forEach(tx => { if(tx.type === 'income') totalInc += tx.amount; else totalExp += tx.amount; });
         const balance = totalInc - totalExp;
@@ -513,162 +516,158 @@
         totalExpenseEl.innerText = formatRupiah(totalExp);
         balanceAmountEl.innerText = formatRupiah(balance);
         dashboardSaldo.innerText = formatRupiah(balance);
-        
         if(!filtered.length) { transactionsListEl.innerHTML = '<div class="empty-trans">Tidak ada transaksi</div>'; return; }
-        transactionsListEl.innerHTML = filtered.map(tx => `
-            <div class="transaksi-item" data-id="${tx.id}">
-                <div class="transaksi-detail">
-                    <div class="transaksi-deskripsi">
-                        ${escapeHtml(tx.description)}${tx.isCollective ? '<span class="collective-badge">📋 Kolektif</span>' : ''}
-                        ${tx.payer ? `<span class="payer-badge">👤 ${escapeHtml(tx.payer)}</span>` : ''}
-                        <div class="transaksi-tanggal">${formatDate(tx.date)}</div>
-                    </div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="transaksi-nominal ${tx.type === 'income' ? 'income' : 'expense'}">
-                        ${tx.type === 'income' ? '+' : '-'} ${formatRupiah(tx.amount)}
-                    </span>
-                    <div class="action-buttons">
-                        <button class="edit-trans" data-id="${tx.id}">✏️</button>
-                        <button class="delete-trans" data-id="${tx.id}">🗑️</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        // event listener untuk klik detail, hapus, edit (sama seperti sebelumnya)
-        document.querySelectorAll('.transaksi-item').forEach(el => {
-            const id = el.dataset.id;
-            el.addEventListener('click', (e) => {
-                if(e.target.classList.contains('edit-trans') || e.target.classList.contains('delete-trans')) return;
-                const tx = currentAccount.transactions.find(t => t.id === id);
-                if(tx && tx.isCollective && tx.items) showDetailModal(tx);
-                else if(tx && !tx.isCollective) showToast("Transaksi biasa, tidak memiliki rincian");
-            });
-        });
+        transactionsListEl.innerHTML = filtered.map(tx => `<div class="transaksi-item" data-id="${tx.id}"><div class="transaksi-detail"><div class="transaksi-deskripsi">${escapeHtml(tx.description)}${tx.isCollective ? '<span class="collective-badge">📋 Kolektif</span>' : ''}${tx.payer ? `<span class="payer-badge">👤 ${escapeHtml(tx.payer)}</span>` : ''}<div class="transaksi-tanggal">${formatDate(tx.date)}</div></div></div><div style="display:flex; align-items:center; gap:8px;"><span class="transaksi-nominal ${tx.type === 'income' ? 'income' : 'expense'}">${tx.type === 'income' ? '+' : '-'} ${formatRupiah(tx.amount)}</span><div class="action-buttons"><button class="edit-trans" data-id="${tx.id}">✏️</button><button class="delete-trans" data-id="${tx.id}">🗑️</button></div></div></div>`).join('');
+        document.querySelectorAll('.transaksi-item').forEach(el => { const id = el.dataset.id; el.addEventListener('click', (e) => { if(e.target.classList.contains('edit-trans') || e.target.classList.contains('delete-trans')) return; const tx = currentAccount.transactions.find(t => t.id === id); if(tx && tx.isCollective && tx.items) showDetailModal(tx); else if(tx && !tx.isCollective) showToast("Transaksi biasa, tidak memiliki rincian"); }); });
         document.querySelectorAll('.delete-trans').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); const id = btn.dataset.id; if(confirm("Hapus transaksi?")) { currentAccount.transactions = currentAccount.transactions.filter(t => t.id !== id); await updateAccountInFirebase(); renderFilteredTransactions(); showToast("Dihapus"); } }));
         document.querySelectorAll('.edit-trans').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.id; const tx = currentAccount.transactions.find(t => t.id === id); if(tx) openEditModal(tx); }));
     }
-    function showDetailModal(tx) {
-        detailTitle.innerText = `Detail: ${tx.description}`;
-        let html = `<div style="margin-bottom:12px;"><strong>Total:</strong> ${formatRupiah(tx.amount)}</div>`;
-        html += `<div style="margin-top:8px;"><strong>Rincian:</strong></div>`;
-        for (const item of tx.items) {
-            html += `<div class="detail-item"><span>${escapeHtml(item.name)}</span><span>${formatRupiah(item.amount)}</span></div>`;
-        }
-        detailContent.innerHTML = html;
-        detailModal.classList.add('active');
-    }
+    function showDetailModal(tx) { detailTitle.innerText = `Detail: ${tx.description}`; let html = `<div style="margin-bottom:12px;"><strong>Total:</strong> ${formatRupiah(tx.amount)}</div><div style="margin-top:8px;"><strong>Rincian:</strong></div>`; for (const item of tx.items) html += `<div class="detail-item"><span>${escapeHtml(item.name)}</span><span>${formatRupiah(item.amount)}</span></div>`; detailContent.innerHTML = html; detailModal.classList.add('active'); }
     closeDetailBtn.addEventListener('click', () => detailModal.classList.remove('active'));
-    function openEditModal(tx) {
-        currentEditTransactionId = tx.id;
-        const rawText = transactionToRawText(tx);
-        editRawText.value = rawText;
-        editPayer.value = tx.payer || "";
-        editDate.value = tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0];
-        editTransModal.classList.add('active');
-    }
+    function openEditModal(tx) { currentEditTransactionId = tx.id; const rawText = transactionToRawText(tx); editRawText.value = rawText; editPayer.value = tx.payer || ""; editDate.value = tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0]; editTransModal.classList.add('active'); }
     async function saveEditedTransaction() {
-        const rawText = editRawText.value.trim();
-        if(!rawText) { showToast("Masukkan teks transaksi"); return; }
-        let parsed;
-        try { parsed = parseTransactionText(rawText, currentAccount.transactions.find(t => t.id === currentEditTransactionId).type); } catch(e) { showToast(e.message); return; }
-        let newPayer = editPayer.value.trim();
-        const newDate = editDate.value;
+        const rawText = editRawText.value.trim(); if(!rawText) { showToast("Masukkan teks transaksi"); return; }
+        let parsed; try { parsed = parseTransactionText(rawText, currentAccount.transactions.find(t => t.id === currentEditTransactionId).type); } catch(e) { showToast(e.message); return; }
+        let newPayer = editPayer.value.trim(); const newDate = editDate.value;
         if(newPayer && !availablePayers.includes(newPayer)) { availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); }
         const index = currentAccount.transactions.findIndex(t => t.id === currentEditTransactionId);
-        if(index !== -1) {
-            currentAccount.transactions[index] = { 
-                ...currentAccount.transactions[index], 
-                description: parsed.description, 
-                amount: parsed.amount, 
-                payer: newPayer || "", 
-                date: new Date(newDate).toISOString(),
-                items: parsed.items || null,
-                isCollective: parsed.isCollective || false
-            };
-            await updateAccountInFirebase();
-            renderFilteredTransactions();
-            showToast("Transaksi diupdate");
-        }
+        if(index !== -1) { currentAccount.transactions[index] = { ...currentAccount.transactions[index], description: parsed.description, amount: parsed.amount, payer: newPayer || "", date: new Date(newDate).toISOString(), items: parsed.items || null, isCollective: parsed.isCollective || false }; await updateAccountInFirebase(); renderFilteredTransactions(); showToast("Transaksi diupdate"); }
         editTransModal.classList.remove('active');
     }
     function resetFilters() { filterStart.value = ''; filterEnd.value = ''; sortField.value = 'date'; sortOrder.value = 'desc'; renderFilteredTransactions(); }
 
-    // ========== EXPORT PDF ==========
+    // ========== Export PDF Umum (sama seperti sebelumnya) ==========
     async function exportToPDF() {
         if (!currentAccount) return;
-        // Siapkan elemen untuk PDF
+        const element = document.createElement('div');
+        element.style.padding = '20px'; element.style.fontFamily = 'system-ui, sans-serif'; element.style.backgroundColor = 'white';
+        element.innerHTML = `<div style="text-align: center; margin-bottom: 20px;"><h2 style="color: #1e4a6b;">Dompet NBS</h2><p style="font-size: 14px;">Laporan Keuangan - ${escapeHtml(currentAccount.name)}</p><p style="font-size: 12px; color: #64748b;">Periode: ${filterStart.value ? filterStart.value : 'Semua'} - ${filterEnd.value ? filterEnd.value : 'Semua'} | Tanggal cetak: ${new Date().toLocaleDateString('id-ID')}</p></div><div style="display: flex; justify-content: space-between; margin-bottom: 20px; gap: 10px;"><div style="flex:1; text-align: center; padding: 10px; background: #f0fdf4; border-radius: 12px;"><div style="font-size: 12px;">Total Pemasukan</div><div style="font-weight: bold; color: #15803d;">${totalIncomeEl.innerText}</div></div><div style="flex:1; text-align: center; padding: 10px; background: #fef2f2; border-radius: 12px;"><div style="font-size: 12px;">Total Pengeluaran</div><div style="font-weight: bold; color: #b91c1c;">${totalExpenseEl.innerText}</div></div><div style="flex:1; text-align: center; padding: 10px; background: #eff6ff; border-radius: 12px;"><div style="font-size: 12px;">Saldo</div><div style="font-weight: bold; color: #0f3a55;">${balanceAmountEl.innerText}</div></div></div><table style="width: 100%; border-collapse: collapse; font-size: 12px;"><thead><tr style="background: #f1f5f9;"><th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Tanggal</th><th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Deskripsi</th><th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Pembayar</th><th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Nominal</th></tr></thead><tbody>${Array.from(transactionsListEl.querySelectorAll('.transaksi-item')).map(item => { const descSpan = item.querySelector('.transaksi-deskripsi'); let desc = descSpan ? descSpan.childNodes[0]?.nodeValue?.trim() || '' : ''; const payerSpan = item.querySelector('.payer-badge'); const payer = payerSpan ? payerSpan.innerText.replace('👤', '').trim() : ''; const nominalSpan = item.querySelector('.transaksi-nominal'); let nominal = nominalSpan ? nominalSpan.innerText : ''; const dateSpan = item.querySelector('.transaksi-tanggal'); let date = dateSpan ? dateSpan.innerText : ''; return `<tr><td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(date)}</td><td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(desc)}</td><td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(payer)}</td><td style="border: 1px solid #e2e8f0; padding: 6px; text-align: right;">${escapeHtml(nominal)}</td></tr>`; }).join('')}</tbody></table><div style="margin-top: 20px; text-align: center; font-size: 10px; color: #94a3b8;">Dicetak dari Dompet NBS - Aplikasi Catatan Keuangan</div>`;
+        const opt = { margin: [0.5, 0.5, 0.5, 0.5], filename: `laporan_keuangan_${currentAccount.name}_${new Date().toISOString().slice(0,10)}.pdf`, image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2, letterRendering: true }, jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' } };
+        html2pdf().set(opt).from(element).save();
+        showToast("PDF sedang diproses...");
+    }
+
+    // ========== BUKU KAS UMUM (BKU) ==========
+    function getSaldoAwalSebelumBulan(tahun, bulan, transactions) {
+        // hitung saldo sebelum tanggal pertama bulan yang dipilih
+        const startDate = new Date(tahun, bulan-1, 1);
+        let saldo = 0;
+        for (const tx of transactions) {
+            const txDate = new Date(tx.date);
+            if (txDate < startDate) {
+                if (tx.type === 'income') saldo += tx.amount;
+                else saldo -= tx.amount;
+            }
+        }
+        return saldo;
+    }
+
+    async function exportBKU() {
+        if (!currentAccount) return;
+        const selectedMonth = parseInt(bkuMonth.value);
+        const selectedYear = parseInt(bkuYear.value);
+        const startDate = new Date(selectedYear, selectedMonth-1, 1);
+        const endDate = new Date(selectedYear, selectedMonth, 0); // hari terakhir bulan
+        endDate.setHours(23,59,59,999);
+        // filter transaksi dalam bulan
+        const transactionsInMonth = (currentAccount.transactions || []).filter(tx => {
+            const txDate = new Date(tx.date);
+            return txDate >= startDate && txDate <= endDate;
+        }).sort((a,b) => new Date(a.date) - new Date(b.date));
+        
+        const saldoAwal = getSaldoAwalSebelumBulan(selectedYear, selectedMonth, currentAccount.transactions || []);
+        let runningBalance = saldoAwal;
+        // Siapkan data tabel
+        const rows = [];
+        for (const tx of transactionsInMonth) {
+            const pemasukan = tx.type === 'income' ? tx.amount : 0;
+            const pengeluaran = tx.type === 'expense' ? tx.amount : 0;
+            runningBalance += pemasukan - pengeluaran;
+            rows.push({
+                tanggal: formatDate(tx.date, false),
+                uraian: tx.description + (tx.payer ? ` (${tx.payer})` : ''),
+                pemasukan,
+                pengeluaran,
+                saldo: runningBalance
+            });
+        }
+        // Nama bulan dalam Bahasa Indonesia
+        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+        const monthName = monthNames[selectedMonth-1];
+        // Buat elemen HTML untuk PDF
         const element = document.createElement('div');
         element.style.padding = '20px';
         element.style.fontFamily = 'system-ui, sans-serif';
         element.style.backgroundColor = 'white';
-        // Header
         element.innerHTML = `
             <div style="text-align: center; margin-bottom: 20px;">
-                <h2 style="color: #1e4a6b;">Dompet NBS</h2>
-                <p style="font-size: 14px;">Laporan Keuangan - ${escapeHtml(currentAccount.name)}</p>
-                <p style="font-size: 12px; color: #64748b;">Periode: ${filterStart.value ? filterStart.value : 'Semua'} - ${filterEnd.value ? filterEnd.value : 'Semua'} | Tanggal cetak: ${new Date().toLocaleDateString('id-ID')}</p>
+                <h2 style="color: #1e4a6b;">BUKU KAS UMUM</h2>
+                <p style="font-size: 14px;">${escapeHtml(currentAccount.name)}</p>
+                <p style="font-size: 14px;">Periode: ${monthName} ${selectedYear}</p>
+                <p style="font-size: 12px; color: #64748b;">Tanggal cetak: ${new Date().toLocaleDateString('id-ID')}</p>
             </div>
-            <div style="display: flex; justify-content: space-between; margin-bottom: 20px; gap: 10px;">
-                <div style="flex:1; text-align: center; padding: 10px; background: #f0fdf4; border-radius: 12px;">
-                    <div style="font-size: 12px;">Total Pemasukan</div>
-                    <div style="font-weight: bold; color: #15803d;">${totalIncomeEl.innerText}</div>
-                </div>
-                <div style="flex:1; text-align: center; padding: 10px; background: #fef2f2; border-radius: 12px;">
-                    <div style="font-size: 12px;">Total Pengeluaran</div>
-                    <div style="font-weight: bold; color: #b91c1c;">${totalExpenseEl.innerText}</div>
-                </div>
-                <div style="flex:1; text-align: center; padding: 10px; background: #eff6ff; border-radius: 12px;">
-                    <div style="font-size: 12px;">Saldo</div>
-                    <div style="font-weight: bold; color: #0f3a55;">${balanceAmountEl.innerText}</div>
-                </div>
+            <div style="margin-bottom: 12px; padding: 8px; background: #f8fafc; border-radius: 8px;">
+                <strong>Saldo awal bulan: </strong> ${formatRupiah(saldoAwal)}
             </div>
-            <table style="width: 100%; border-collapse: collapse; font-size: 12px;">
+            <table style="width: 100%; border-collapse: collapse; font-size: 11px;">
                 <thead>
-                    <tr style="background: #f1f5f9;">
-                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Tanggal</th>
-                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Deskripsi</th>
-                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: left;">Pembayar</th>
-                        <th style="border: 1px solid #e2e8f0; padding: 8px; text-align: right;">Nominal</th>
+                    <tr style="background: #e2e8f0;">
+                        <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: center;">Tanggal</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: left;">Uraian</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;">Pemasukan (Rp)</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;">Pengeluaran (Rp)</th>
+                        <th style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;">Saldo (Rp)</th>
                     </tr>
                 </thead>
                 <tbody>
-                    ${Array.from(transactionsListEl.querySelectorAll('.transaksi-item')).map(item => {
-                        const descSpan = item.querySelector('.transaksi-deskripsi');
-                        let desc = descSpan ? descSpan.childNodes[0]?.nodeValue?.trim() || '' : '';
-                        const payerSpan = item.querySelector('.payer-badge');
-                        const payer = payerSpan ? payerSpan.innerText.replace('👤', '').trim() : '';
-                        const nominalSpan = item.querySelector('.transaksi-nominal');
-                        let nominal = nominalSpan ? nominalSpan.innerText : '';
-                        const dateSpan = item.querySelector('.transaksi-tanggal');
-                        let date = dateSpan ? dateSpan.innerText : '';
-                        return `<tr>
-                            <td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(date)}</td>
-                            <td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(desc)}</td>
-                            <td style="border: 1px solid #e2e8f0; padding: 6px;">${escapeHtml(payer)}</td>
-                            <td style="border: 1px solid #e2e8f0; padding: 6px; text-align: right;">${escapeHtml(nominal)}</td>
-                        </tr>`;
-                    }).join('')}
+                    ${rows.map(row => `
+                        <tr>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: center;">${escapeHtml(row.tanggal)}</td>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px;">${escapeHtml(row.uraian)}</td>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right;">${row.pemasukan ? formatRupiah(row.pemasukan) : '-'}</td>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right;">${row.pengeluaran ? formatRupiah(row.pengeluaran) : '-'}</td>
+                            <td style="border: 1px solid #cbd5e1; padding: 6px; text-align: right;">${formatRupiah(row.saldo)}</td>
+                        </tr>
+                    `).join('')}
+                    ${rows.length === 0 ? '<tr><td colspan="5" style="text-align:center; padding:20px;">Tidak ada transaksi pada bulan ini</td></tr>' : ''}
                 </tbody>
+                <tfoot>
+                    <tr style="background: #f1f5f9;">
+                        <td colspan="4" style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;"><strong>Saldo Akhir</strong></td>
+                        <td style="border: 1px solid #cbd5e1; padding: 8px; text-align: right;"><strong>${formatRupiah(runningBalance)}</strong></td>
+                    </tr>
+                </tfoot>
             </table>
             <div style="margin-top: 20px; text-align: center; font-size: 10px; color: #94a3b8;">
-                Dicetak dari Dompet NBS - Aplikasi Catatan Keuangan
+                Dicetak dari Dompet NBS - Buku Kas Umum
             </div>
         `;
-        // Gunakan html2pdf
         const opt = {
             margin: [0.5, 0.5, 0.5, 0.5],
-            filename: `laporan_keuangan_${currentAccount.name}_${new Date().toISOString().slice(0,10)}.pdf`,
+            filename: `BKU_${currentAccount.name}_${monthName}_${selectedYear}.pdf`,
             image: { type: 'jpeg', quality: 0.98 },
             html2canvas: { scale: 2, letterRendering: true },
             jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
         };
         html2pdf().set(opt).from(element).save();
-        showToast("PDF sedang diproses...");
+        showToast("BKU sedang diproses...");
+        bkuModal.classList.remove('active');
     }
-    exportPdfBtn.addEventListener('click', exportToPDF);
 
-    // Event listeners lainnya
+    // Event listeners untuk BKU
+    exportBkuBtn.addEventListener('click', () => {
+        if (!currentAccount) return;
+        // Set tahun default ke tahun berjalan
+        const now = new Date();
+        bkuYear.value = now.getFullYear();
+        bkuMonth.value = now.getMonth() + 1;
+        bkuModal.classList.add('active');
+    });
+    bkuCancelBtn.addEventListener('click', () => bkuModal.classList.remove('active'));
+    bkuGenerateBtn.addEventListener('click', exportBKU);
+
+    // Event listeners lainnya (sama seperti sebelumnya)
+    exportPdfBtn.addEventListener('click', exportToPDF);
     btnTambahRekening.addEventListener('click', () => { modalTitle.innerText = "Rekening Baru"; modalInputName.style.display = 'block'; modalInputPassword.value = ''; modalInputName.value = ''; modal.dataset.mode = 'create'; modal.classList.add('active'); });
     modalCancelBtn.addEventListener('click', closeModal);
     modalConfirmBtn.addEventListener('click', async () => { if(modal.dataset.mode === 'create') { try { await createNewAccount(modalInputName.value.trim(), modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; } } else if(modal.dataset.mode === 'login') { try { await verifyAndLogin(modal.dataset.id, modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; } } });
