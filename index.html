@@ -3,15 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Dompet NBS - Catatan Keuangan</title>
+    <title>Dompet NBS - Catatan Keuangan Pintar</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
-
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
         body {
             font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: #f5f7fb;
@@ -19,317 +13,112 @@
             padding-bottom: 100px;
             color: #1e293b;
         }
-
-        .app-container {
-            max-width: 500px;
-            margin: 0 auto;
-        }
-
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin-bottom: 24px;
-            flex-wrap: wrap;
-            gap: 12px;
-        }
-        h1 {
-            font-size: 1.8rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #0f2b3d, #1e4a6b);
-            background-clip: text;
-            -webkit-background-clip: text;
-            color: transparent;
-        }
+        .app-container { max-width: 500px; margin: 0 auto; }
+        .header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 24px; flex-wrap: wrap; gap: 12px; }
+        h1 { font-size: 1.8rem; font-weight: 700; background: linear-gradient(135deg, #0f2b3d, #1e4a6b); background-clip: text; -webkit-background-clip: text; color: transparent; }
         .btn-icon {
-            background: white;
-            border: none;
-            padding: 10px 16px;
-            border-radius: 48px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            transition: 0.2s;
-            color: #1e4a6b;
-            border: 1px solid #e2e8f0;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            background: white; border: none; padding: 10px 16px; border-radius: 48px; font-weight: 600;
+            display: inline-flex; align-items: center; gap: 8px; cursor: pointer; transition: 0.2s;
+            color: #1e4a6b; border: 1px solid #e2e8f0; box-shadow: 0 2px 6px rgba(0,0,0,0.05);
         }
         .btn-icon:active { transform: scale(0.96); background: #f1f5f9; }
         .btn-primary { background: #1e4a6b; color: white; border: none; }
         .btn-danger { background: #fff1f0; color: #c2410c; border-color: #ffddd6; }
         .btn-outline { background: transparent; border: 1px solid #cbd5e1; color: #475569; }
         .btn-small { padding: 8px 12px; font-size: 0.8rem; }
-        
         .dashboard-header {
-            background: white;
-            border-radius: 32px;
-            padding: 20px;
-            margin-bottom: 20px;
-            text-align: center;
+            background: white; border-radius: 32px; padding: 20px; margin-bottom: 20px; text-align: center;
         }
-        .rekening-title {
-            font-size: 1.3rem;
-            font-weight: 600;
-            color: #475569;
-            margin-bottom: 8px;
-        }
-        .saldo {
-            font-size: 2.4rem;
-            font-weight: 800;
-            color: #0f3a55;
-            margin: 8px 0;
-        }
-        .action-row {
-            display: flex;
-            justify-content: center;
-            gap: 12px;
-            margin-top: 16px;
-            flex-wrap: wrap;
-        }
+        .rekening-title { font-size: 1.3rem; font-weight: 600; color: #475569; margin-bottom: 8px; }
+        .saldo { font-size: 2.4rem; font-weight: 800; color: #0f3a55; margin: 8px 0; }
+        .action-row { display: flex; justify-content: center; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
         .filter-bar {
-            background: white;
-            border-radius: 28px;
-            padding: 14px;
-            margin-bottom: 16px;
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
+            background: white; border-radius: 28px; padding: 14px; margin-bottom: 16px;
+            display: flex; flex-wrap: wrap; gap: 10px; align-items: center;
         }
         .filter-bar input, .filter-bar select {
-            padding: 10px 12px;
-            border-radius: 60px;
-            border: 1px solid #e2e8f0;
-            flex: 1;
-            min-width: 110px;
-            font-size: 0.85rem;
+            padding: 10px 12px; border-radius: 60px; border: 1px solid #e2e8f0;
+            flex: 1; min-width: 110px; font-size: 0.85rem;
         }
-        .sort-group {
-            display: flex;
-            gap: 6px;
-            flex: 2;
-            min-width: 160px;
-        }
-        .sort-group select {
-            flex: 1;
-        }
-        .transaksi-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: baseline;
-            margin: 16px 6px 12px 6px;
-        }
+        .sort-group { display: flex; gap: 6px; flex: 2; min-width: 160px; }
+        .sort-group select { flex: 1; }
+        .transaksi-header { display: flex; justify-content: space-between; align-items: baseline; margin: 16px 6px 12px 6px; }
         .transaksi-list {
-            background: white;
-            border-radius: 32px;
-            padding: 8px 4px;
-            max-height: 460px;
-            overflow-y: auto;
+            background: white; border-radius: 32px; padding: 8px 4px; max-height: 460px; overflow-y: auto;
         }
         .transaksi-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 14px 12px;
-            border-bottom: 1px solid #f0f2f5;
+            display: flex; justify-content: space-between; align-items: center; padding: 14px 12px; border-bottom: 1px solid #f0f2f5;
         }
-        .transaksi-detail {
-            flex: 1;
-        }
-        .transaksi-deskripsi {
-            font-weight: 500;
-            margin-bottom: 4px;
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            flex-wrap: wrap;
-        }
-        .payer-badge {
-            background: #eef2ff;
-            padding: 2px 10px;
-            border-radius: 30px;
-            font-size: 0.7rem;
-            font-weight: 500;
-            color: #1e4a6b;
-            display: inline-flex;
-            align-items: center;
-            gap: 4px;
-        }
-        .transaksi-tanggal {
-            font-size: 0.7rem;
-            color: #94a3b8;
-        }
-        .transaksi-nominal {
-            font-weight: 700;
-            font-size: 1rem;
-        }
+        .transaksi-detail { flex: 1; }
+        .transaksi-deskripsi { font-weight: 500; margin-bottom: 4px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+        .payer-badge { background: #eef2ff; padding: 2px 10px; border-radius: 30px; font-size: 0.7rem; font-weight: 500; color: #1e4a6b; display: inline-flex; align-items: center; gap: 4px; }
+        .transaksi-tanggal { font-size: 0.7rem; color: #94a3b8; }
+        .transaksi-nominal { font-weight: 700; font-size: 1rem; }
         .income { color: #15803d; }
         .expense { color: #b91c1c; }
-        .action-buttons {
-            display: flex;
-            gap: 6px;
-        }
-        .edit-trans, .delete-trans {
-            background: none;
-            border: none;
-            font-size: 1.2rem;
-            cursor: pointer;
-            padding: 6px;
-            border-radius: 30px;
-        }
-        .empty-trans {
-            text-align: center;
-            padding: 40px;
-            color: #94a3b8;
-        }
+        .action-buttons { display: flex; gap: 6px; }
+        .edit-trans, .delete-trans { background: none; border: none; font-size: 1.2rem; cursor: pointer; padding: 6px; border-radius: 30px; }
+        .empty-trans { text-align: center; padding: 40px; color: #94a3b8; }
         .fixed-bottom-buttons {
-            position: fixed;
-            bottom: 20px;
-            left: 0;
-            right: 0;
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            padding: 0 20px;
-            max-width: 500px;
-            margin: 0 auto;
-            z-index: 99;
+            position: fixed; bottom: 20px; left: 0; right: 0; display: flex; justify-content: center;
+            gap: 20px; padding: 0 20px; max-width: 500px; margin: 0 auto; z-index: 99;
         }
         .float-btn {
-            flex: 1;
-            padding: 14px 0;
-            border: none;
-            border-radius: 60px;
-            font-weight: 700;
-            font-size: 1.1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            cursor: pointer;
-            box-shadow: 0 6px 14px rgba(0,0,0,0.15);
-            transition: 0.1s linear;
+            flex: 1; padding: 14px 0; border: none; border-radius: 60px; font-weight: 700; font-size: 1.1rem;
+            display: flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer;
+            box-shadow: 0 6px 14px rgba(0,0,0,0.15); transition: 0.1s linear;
         }
         .float-btn:active { transform: scale(0.97); }
         .btn-income { background: #15803d; color: white; }
         .btn-expense { background: #b91c1c; color: white; }
         .modal-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            backdrop-filter: blur(4px);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            visibility: hidden;
-            opacity: 0;
-            transition: 0.2s;
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center; z-index: 1000;
+            visibility: hidden; opacity: 0; transition: 0.2s;
         }
-        .modal-overlay.active {
-            visibility: visible;
-            opacity: 1;
-        }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
         .modal-card {
-            background: white;
-            width: 90%;
-            max-width: 360px;
-            border-radius: 40px;
-            padding: 28px 24px;
-            max-height: 85vh;
-            overflow-y: auto;
+            background: white; width: 90%; max-width: 400px; border-radius: 40px;
+            padding: 28px 24px; max-height: 85vh; overflow-y: auto;
         }
-        .modal-card h3 {
-            font-size: 1.5rem;
-            margin-bottom: 20px;
+        .modal-card h3 { font-size: 1.5rem; margin-bottom: 20px; }
+        .modal-card textarea, .modal-card input, .modal-card select {
+            width: 100%; padding: 12px 16px; margin: 8px 0 16px;
+            border: 1.5px solid #e2e8f0; border-radius: 24px; font-size: 1rem;
+            font-family: inherit;
         }
-        .modal-card input, .modal-card select {
-            width: 100%;
-            padding: 12px 16px;
-            margin: 8px 0 16px;
-            border: 1.5px solid #e2e8f0;
-            border-radius: 60px;
-            font-size: 1rem;
-        }
-        .input-with-button {
-            display: flex;
-            gap: 8px;
-            align-items: center;
-            margin: 8px 0 16px;
-        }
-        .input-with-button input {
-            flex: 1;
-            margin: 0;
-        }
-        .input-with-button button {
-            padding: 12px 14px;
-            white-space: nowrap;
-        }
-        .modal-buttons {
-            display: flex;
-            gap: 12px;
-            margin-top: 16px;
-        }
-        .modal-buttons button {
-            flex: 1;
-            padding: 12px;
-            border-radius: 60px;
-            font-weight: 600;
-            border: none;
-            cursor: pointer;
-        }
+        .modal-card textarea { min-height: 120px; resize: vertical; }
+        .input-with-button { display: flex; gap: 8px; align-items: center; margin: 8px 0 16px; }
+        .input-with-button input { flex: 1; margin: 0; }
+        .modal-buttons { display: flex; gap: 12px; margin-top: 16px; }
+        .modal-buttons button { flex: 1; padding: 12px; border-radius: 60px; font-weight: 600; border: none; cursor: pointer; }
         .toast-message {
-            position: fixed;
-            bottom: 100px;
-            left: 20px;
-            right: 20px;
-            background: #1f2937;
-            color: white;
-            text-align: center;
-            padding: 12px;
-            border-radius: 60px;
-            z-index: 1100;
-            opacity: 0;
-            transition: 0.3s;
-            pointer-events: none;
+            position: fixed; bottom: 100px; left: 20px; right: 20px; background: #1f2937;
+            color: white; text-align: center; padding: 12px; border-radius: 60px;
+            z-index: 1100; opacity: 0; transition: 0.3s; pointer-events: none;
         }
-        .accounts-grid {
-            display: flex;
-            flex-direction: column;
-            gap: 16px;
-        }
+        .accounts-grid { display: flex; flex-direction: column; gap: 16px; }
         .account-card {
-            background: white;
-            border-radius: 28px;
-            padding: 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            cursor: pointer;
-            border: 1px solid #edf2f7;
+            background: white; border-radius: 28px; padding: 20px;
+            display: flex; justify-content: space-between; align-items: center;
+            cursor: pointer; border: 1px solid #edf2f7;
         }
         .account-name { font-size: 1.25rem; font-weight: 600; }
         .account-badge { background: #eef2ff; padding: 6px 12px; border-radius: 40px; font-size: 0.75rem; }
         .loading { text-align: center; padding: 40px; color: #5b6e8c; }
+        .payer-list-item {
+            display: flex; justify-content: space-between; align-items: center;
+            background: #f8fafc; padding: 10px 16px; border-radius: 60px; margin-bottom: 8px;
+        }
     </style>
 </head>
 <body>
 <div class="app-container">
     <div id="accountsView">
-        <div class="header">
-            <h1>Dompet NBS</h1>
-            <button class="btn-icon" id="btnTambahRekening">+ Rekening</button>
-        </div>
-        <div id="accountsList" class="accounts-grid">
-            <div class="loading">Memuat rekening...</div>
-        </div>
+        <div class="header"><h1>Dompet NBS</h1><button class="btn-icon" id="btnTambahRekening">+ Rekening</button></div>
+        <div id="accountsList" class="accounts-grid"><div class="loading">Memuat rekening...</div></div>
     </div>
-
     <div id="dashboardView" style="display: none;">
         <div class="dashboard-header">
             <div class="rekening-title" id="dashboardNamaRekening">-</div>
@@ -340,8 +129,6 @@
                 <button class="btn-icon btn-danger" id="deleteAccountBtn">🗑️ Hapus</button>
             </div>
         </div>
-
-        <!-- Filter & Sortir -->
         <div class="filter-bar">
             <input type="date" id="filterStartDate" placeholder="Dari tgl">
             <input type="date" id="filterEndDate" placeholder="Sampai tgl">
@@ -353,19 +140,15 @@
                     <option value="amount">Nominal</option>
                 </select>
                 <select id="sortOrder">
-                    <option value="desc">Terbaru / Terbesar (Z-A)</option>
-                    <option value="asc">Terlama / Terkecil (A-Z)</option>
+                    <option value="desc">Terbaru / Terbesar</option>
+                    <option value="asc">Terlama / Terkecil</option>
                 </select>
             </div>
             <button id="resetFilterBtn" class="btn-icon">Reset</button>
+            <button id="managePayerBtn" class="btn-icon">👥 Kelola Pembayar</button>
         </div>
-
-        <div class="transaksi-header">
-            <h3>📝 Transaksi</h3>
-        </div>
-        <div id="transactionsList" class="transaksi-list">
-            <div class="empty-trans">Belum ada transaksi</div>
-        </div>
+        <div class="transaksi-header"><h3>📝 Transaksi</h3></div>
+        <div id="transactionsList" class="transaksi-list"><div class="empty-trans">Belum ada transaksi</div></div>
     </div>
 </div>
 
@@ -374,40 +157,33 @@
     <button class="float-btn btn-expense" id="btnExpenseFloating">➖ Pengeluaran</button>
 </div>
 
-<!-- Modal untuk tambah/edit rekening & login -->
+<!-- Modal Login / Buat Rekening -->
 <div id="modalOverlay" class="modal-overlay">
     <div class="modal-card">
         <h3 id="modalTitle">Rekening Baru</h3>
         <input type="text" id="modalInputName" placeholder="Nama rekening">
         <input type="password" id="modalInputPassword" inputmode="numeric" maxlength="6" placeholder="Password 6 digit">
         <div id="modalError" style="color:#c2410c;"></div>
-        <div class="modal-buttons">
-            <button id="modalCancelBtn">Batal</button>
-            <button id="modalConfirmBtn" class="btn-primary">Simpan</button>
-        </div>
+        <div class="modal-buttons"><button id="modalCancelBtn">Batal</button><button id="modalConfirmBtn" class="btn-primary">Simpan</button></div>
     </div>
 </div>
 
-<!-- Modal Tambah Transaksi dengan Autocomplete Pembayar -->
+<!-- Modal Transaksi Pintar (textarea) -->
 <div id="transaksiModal" class="modal-overlay">
     <div class="modal-card">
         <h3 id="transaksiModalTitle">Tambah Transaksi</h3>
-        <input type="text" id="txDesc" placeholder="Deskripsi (contoh: Makan siang, Gaji)">
-        <input type="number" id="txAmount" placeholder="Nominal" step="1000">
-        <input type="date" id="txDate">
+        <textarea id="txRawText" placeholder="Contoh single:&#10;Buku tulis 5 lembar 50.000&#10;&#10;Contoh kolektif:&#10;ATK&#10;Kertas A4 20 rim 25rb&#10;Kertas F4 5 rim 35.000&#10;Penggaris 600 buah 35000"></textarea>
         <div class="input-with-button">
-            <input type="text" id="txPayer" list="payerList" placeholder="Pembayar (ketik atau pilih)" autocomplete="off">
+            <input type="text" id="txPayer" list="payerList" placeholder="Pembayar (opsional)" autocomplete="off">
             <datalist id="payerList"></datalist>
             <button type="button" id="btnAddNewPayer" class="btn-icon btn-small">+ Baru</button>
         </div>
-        <div class="modal-buttons">
-            <button id="txModalCancel">Batal</button>
-            <button id="txModalSave" class="btn-primary">Simpan</button>
-        </div>
+        <input type="date" id="txDate">
+        <div class="modal-buttons"><button id="txModalCancel">Batal</button><button id="txModalSave" class="btn-primary">Simpan</button></div>
     </div>
 </div>
 
-<!-- Modal Edit Transaksi -->
+<!-- Modal Edit Transaksi (sederhana) -->
 <div id="editTransModal" class="modal-overlay">
     <div class="modal-card">
         <h3>Edit Transaksi</h3>
@@ -415,14 +191,24 @@
         <input type="number" id="editAmount" placeholder="Nominal">
         <input type="date" id="editDate">
         <div class="input-with-button">
-            <input type="text" id="editPayer" list="editPayerList" placeholder="Pembayar" autocomplete="off">
+            <input type="text" id="editPayer" list="editPayerList" placeholder="Pembayar">
             <datalist id="editPayerList"></datalist>
             <button type="button" id="btnEditAddNewPayer" class="btn-icon btn-small">+ Baru</button>
         </div>
-        <div class="modal-buttons">
-            <button id="editTransCancel">Batal</button>
-            <button id="editTransSave" class="btn-primary">Simpan</button>
+        <div class="modal-buttons"><button id="editTransCancel">Batal</button><button id="editTransSave" class="btn-primary">Simpan</button></div>
+    </div>
+</div>
+
+<!-- Modal Kelola Pembayar (dengan hapus) -->
+<div id="payerManagerModal" class="modal-overlay">
+    <div class="modal-card">
+        <h3>👥 Kelola Pembayar</h3>
+        <div id="payerListContainer"></div>
+        <div style="display: flex; gap: 8px; margin-top: 8px;">
+            <input type="text" id="newPayerName" placeholder="Nama pembayar baru" style="flex:1;">
+            <button id="addNewPayerBtn" class="btn-icon">+ Tambah</button>
         </div>
+        <div class="modal-buttons"><button id="closePayerManager">Tutup</button></div>
     </div>
 </div>
 
@@ -449,7 +235,7 @@
     let currentEditTransactionId = null;
     let pendingTransactionType = 'income';
 
-    // DOM elements
+    // DOM elements (sama seperti sebelumnya, tidak perlu diubah)
     const accountsView = document.getElementById('accountsView');
     const dashboardView = document.getElementById('dashboardView');
     const accountsListEl = document.getElementById('accountsList');
@@ -477,12 +263,11 @@
     const btnExpenseFloating = document.getElementById('btnExpenseFloating');
     const transaksiModal = document.getElementById('transaksiModal');
     const transaksiModalTitle = document.getElementById('transaksiModalTitle');
-    const txDesc = document.getElementById('txDesc');
-    const txAmount = document.getElementById('txAmount');
-    const txDate = document.getElementById('txDate');
+    const txRawText = document.getElementById('txRawText');
     const txPayer = document.getElementById('txPayer');
     const payerList = document.getElementById('payerList');
     const btnAddNewPayer = document.getElementById('btnAddNewPayer');
+    const txDate = document.getElementById('txDate');
     const txModalCancel = document.getElementById('txModalCancel');
     const txModalSave = document.getElementById('txModalSave');
     const editTransModal = document.getElementById('editTransModal');
@@ -494,283 +279,164 @@
     const btnEditAddNewPayer = document.getElementById('btnEditAddNewPayer');
     const editTransCancel = document.getElementById('editTransCancel');
     const editTransSave = document.getElementById('editTransSave');
+    const payerManagerModal = document.getElementById('payerManagerModal');
+    const payerListContainer = document.getElementById('payerListContainer');
+    const newPayerName = document.getElementById('newPayerName');
+    const addNewPayerBtn = document.getElementById('addNewPayerBtn');
+    const closePayerManager = document.getElementById('closePayerManager');
+    const managePayerBtn = document.getElementById('managePayerBtn');
 
-    function showToast(msg) {
-        const toast = document.getElementById('toastMsg');
-        toast.textContent = msg;
-        toast.style.opacity = '1';
-        setTimeout(() => toast.style.opacity = '0', 2000);
-    }
-    function formatRupiah(angka) {
-        return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka);
-    }
-    function formatDate(iso) {
-        if(!iso) return "-";
-        const d = new Date(iso);
-        return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
-    }
+    function showToast(msg) { const toast = document.getElementById('toastMsg'); toast.textContent = msg; toast.style.opacity = '1'; setTimeout(() => toast.style.opacity = '0', 2000); }
+    function formatRupiah(angka) { return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR', minimumFractionDigits: 0 }).format(angka); }
+    function formatDate(iso) { if(!iso) return "-"; const d = new Date(iso); return d.toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' }); }
     function escapeHtml(str) { if(!str) return ''; return str.replace(/[&<>]/g, m => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;' }[m])); }
 
+    // Fungsi ekstrak nominal dari string, mengembalikan { value, lastIndex } atau null
+    function extractNominalWithPosition(text) {
+        // Pola: angka dengan pemisah titik/koma, diikuti opsional spasi dan rb/ribu/k, atau sebaliknya
+        const regex = /(\d{1,3}(?:[.,]\d{3})*(?:[.,]\d+)?)\s*(rb|ribu|k)?/gi;
+        let matches = [...text.matchAll(regex)];
+        if (matches.length === 0) return null;
+        // Ambil yang terakhir (paling kanan) sebagai nominal utama
+        const last = matches[matches.length - 1];
+        let numStr = last[1].replace(/\./g, '').replace(/,/g, '');
+        let num = parseFloat(numStr);
+        if (isNaN(num)) return null;
+        const suffix = last[2] ? last[2].toLowerCase() : '';
+        if (suffix === 'rb' || suffix === 'ribu' || suffix === 'k') num *= 1000;
+        return { value: num, matchText: last[0], index: last.index };
+    }
+
+    // Parsing teks transaksi single line (atau gabungan) dengan cerdas
+    function parseSingleLine(text) {
+        let nominalInfo = extractNominalWithPosition(text);
+        if (!nominalInfo) throw new Error("Tidak ditemukan nominal. Contoh: 'Buku 50.000'");
+        let description = text.replace(nominalInfo.matchText, '').trim();
+        // Hapus spasi berlebih dan jika kosong beri default
+        if (!description) description = pendingTransactionType === 'income' ? 'Pemasukan' : 'Pengeluaran';
+        return { description, amount: nominalInfo.value };
+    }
+
+    // Parsing teks multi baris (kolektif)
+    function parseCollective(lines) {
+        // Cek baris pertama apakah mengandung nominal
+        let firstLineNominal = extractNominalWithPosition(lines[0]);
+        let title = "";
+        let startIdx = 0;
+        if (firstLineNominal === null) {
+            title = lines[0].trim();
+            startIdx = 1;
+        } else {
+            title = "NN";
+            startIdx = 0;
+        }
+        let totalAmount = 0;
+        for (let i = startIdx; i < lines.length; i++) {
+            let nom = extractNominalWithPosition(lines[i]);
+            if (nom) totalAmount += nom.value;
+        }
+        if (totalAmount === 0) throw new Error("Tidak ada nominal valid dalam kolektif");
+        return { description: title, amount: totalAmount };
+    }
+
+    // Fungsi utama parsing teks transaksi (mendukung single line dan multi line kolektif)
+    function parseTransactionText(rawText, type) {
+        const lines = rawText.split(/\r?\n/).filter(l => l.trim().length > 0);
+        if (lines.length === 0) throw new Error("Teks kosong");
+        // Deteksi multi line kolektif: jika lebih dari 1 baris, dan minimal 2 baris memiliki nominal atau baris pertama tanpa nominal
+        let hasNominalPerBaris = lines.map(l => extractNominalWithPosition(l) !== null);
+        let anyNominal = hasNominalPerBaris.some(v => v === true);
+        if (lines.length === 1 || !anyNominal) {
+            // Gabungkan semua baris jika multi line tapi tidak ada nominal? (fallback)
+            let combined = lines.join(' ');
+            return parseSingleLine(combined);
+        } else {
+            // Multi baris dengan setidaknya satu nominal di baris kedua dst -> kolektif
+            return parseCollective(lines);
+        }
+    }
+
+    // Fungsi load accounts dll (sama seperti sebelumnya)
     async function loadAccounts() {
-        try {
-            const snap = await getDocs(collection(db, ACCOUNTS_COLLECTION));
-            const accounts = [];
-            snap.forEach(d => accounts.push({ id: d.id, ...d.data() }));
-            renderAccountsList(accounts);
-        } catch(e) { showToast("Gagal muat rekening"); }
+        try { const snap = await getDocs(collection(db, ACCOUNTS_COLLECTION)); const accounts = []; snap.forEach(d => accounts.push({ id: d.id, ...d.data() })); renderAccountsList(accounts); } 
+        catch(e) { showToast("Gagal muat rekening"); }
     }
     function renderAccountsList(accounts) {
         if(!accounts.length) { accountsListEl.innerHTML = '<div class="loading">✨ Belum ada rekening. + Rekening Baru</div>'; return; }
         accountsListEl.innerHTML = accounts.map(acc => `<div class="account-card" data-id="${acc.id}" data-name="${escapeHtml(acc.name)}"><span class="account-name">${escapeHtml(acc.name)}</span><span class="account-badge">🔒 6 digit</span></div>`).join('');
-        document.querySelectorAll('.account-card').forEach(card => {
-            card.addEventListener('click', () => { openLoginModal(card.dataset.id, card.dataset.name); });
-        });
+        document.querySelectorAll('.account-card').forEach(card => { card.addEventListener('click', () => { openLoginModal(card.dataset.id, card.dataset.name); }); });
     }
-    function openLoginModal(id, name) {
-        modalTitle.innerText = `Masuk ke ${name}`;
-        modalInputName.style.display = 'none';
-        modalInputPassword.value = '';
-        modal.dataset.mode = 'login';
-        modal.dataset.id = id;
-        modal.classList.add('active');
-    }
+    function openLoginModal(id, name) { modalTitle.innerText = `Masuk ke ${name}`; modalInputName.style.display = 'none'; modalInputPassword.value = ''; modal.dataset.mode = 'login'; modal.dataset.id = id; modal.classList.add('active'); }
     function closeModal() { modal.classList.remove('active'); modalInputName.style.display = 'block'; modalInputName.value = ''; modalInputPassword.value = ''; modalError.innerText = ''; delete modal.dataset.mode; delete modal.dataset.id; }
-    async function createNewAccount(name, pwd) {
-        if(!name.trim()) throw new Error("Nama wajib");
-        if(!/^\d{6}$/.test(pwd)) throw new Error("Password 6 digit");
-        await addDoc(collection(db, ACCOUNTS_COLLECTION), { name: name.trim(), password: pwd, transactions: [], payers: ["Diri sendiri", "Teman", "Keluarga"] });
-        showToast(`Rekening "${name}" dibuat`);
-        await loadAccounts();
-    }
-    async function verifyAndLogin(accountId, pwd) {
-        const docSnap = await getDoc(doc(db, ACCOUNTS_COLLECTION, accountId));
-        if(!docSnap.exists()) throw new Error("Rekening tidak ditemukan");
-        const data = docSnap.data();
-        if(data.password !== pwd) throw new Error("Password salah");
-        currentAccount = { id: accountId, ...data };
-        availablePayers = currentAccount.payers || ["Diri sendiri", "Teman", "Keluarga"];
-        updatePayerDatalists();
-        showDashboard();
-    }
-    function showDashboard() {
-        accountsView.style.display = 'none';
-        dashboardView.style.display = 'block';
-        fixedButtonsDiv.style.display = 'flex';
-        dashboardNama.innerText = currentAccount.name;
-        renderFilteredTransactions();
-    }
-    function logout() {
-        currentAccount = null;
-        accountsView.style.display = 'block';
-        dashboardView.style.display = 'none';
-        fixedButtonsDiv.style.display = 'none';
-        loadAccounts();
-    }
-    async function updateAccountInFirebase() {
-        if(!currentAccount) return;
-        const ref = doc(db, ACCOUNTS_COLLECTION, currentAccount.id);
-        await updateDoc(ref, { name: currentAccount.name, transactions: currentAccount.transactions, payers: availablePayers });
-    }
-    async function deleteAccountWithPassword() {
-        const pwd = prompt("Masukkan password 6 digit untuk hapus rekening:");
-        if(pwd !== currentAccount.password) { showToast("Password salah!"); return; }
-        if(confirm(`Hapus rekening "${currentAccount.name}" permanen?`)) {
-            await deleteDoc(doc(db, ACCOUNTS_COLLECTION, currentAccount.id));
-            showToast("Rekening dihapus");
-            logout();
-        }
-    }
-    async function editAccountName() {
-        const pwd = prompt("Masukkan password untuk edit nama:");
-        if(pwd !== currentAccount.password) { showToast("Password salah"); return; }
-        const newName = prompt("Nama baru:", currentAccount.name);
-        if(newName && newName.trim()) {
-            currentAccount.name = newName.trim();
-            await updateAccountInFirebase();
-            dashboardNama.innerText = currentAccount.name;
-            showToast("Nama rekening diubah");
-        }
-    }
-    function updatePayerDatalists() {
-        const options = availablePayers.map(p => `<option value="${escapeHtml(p)}">`).join('');
-        payerList.innerHTML = options;
-        editPayerList.innerHTML = options;
-    }
-    async function addNewPayerFromInput(inputElement, datalistId) {
-        const newPayer = inputElement.value.trim();
-        if(!newPayer) { showToast("Masukkan nama pembayar"); return; }
-        if(availablePayers.includes(newPayer)) { showToast("Pembayar sudah ada"); return; }
-        availablePayers.push(newPayer);
-        await updateAccountInFirebase();
-        updatePayerDatalists();
-        showToast(`Pembayar "${newPayer}" ditambahkan`);
-        inputElement.value = newPayer;
-    }
-
-    // Pop-up tambah transaksi
+    async function createNewAccount(name, pwd) { if(!name.trim()) throw new Error("Nama wajib"); if(!/^\d{6}$/.test(pwd)) throw new Error("Password 6 digit"); await addDoc(collection(db, ACCOUNTS_COLLECTION), { name: name.trim(), password: pwd, transactions: [], payers: ["Diri sendiri", "Teman", "Keluarga"] }); showToast(`Rekening "${name}" dibuat`); await loadAccounts(); }
+    async function verifyAndLogin(accountId, pwd) { const docSnap = await getDoc(doc(db, ACCOUNTS_COLLECTION, accountId)); if(!docSnap.exists()) throw new Error("Rekening tidak ditemukan"); const data = docSnap.data(); if(data.password !== pwd) throw new Error("Password salah"); currentAccount = { id: accountId, ...data }; availablePayers = currentAccount.payers || ["Diri sendiri", "Teman", "Keluarga"]; updatePayerDatalists(); showDashboard(); }
+    function showDashboard() { accountsView.style.display = 'none'; dashboardView.style.display = 'block'; fixedButtonsDiv.style.display = 'flex'; dashboardNama.innerText = currentAccount.name; renderFilteredTransactions(); }
+    function logout() { currentAccount = null; accountsView.style.display = 'block'; dashboardView.style.display = 'none'; fixedButtonsDiv.style.display = 'none'; loadAccounts(); }
+    async function updateAccountInFirebase() { if(!currentAccount) return; const ref = doc(db, ACCOUNTS_COLLECTION, currentAccount.id); await updateDoc(ref, { name: currentAccount.name, transactions: currentAccount.transactions, payers: availablePayers }); }
+    async function deleteAccountWithPassword() { const pwd = prompt("Masukkan password 6 digit untuk hapus rekening:"); if(pwd !== currentAccount.password) { showToast("Password salah!"); return; } if(confirm(`Hapus rekening "${currentAccount.name}" permanen?`)) { await deleteDoc(doc(db, ACCOUNTS_COLLECTION, currentAccount.id)); showToast("Rekening dihapus"); logout(); } }
+    async function editAccountName() { const pwd = prompt("Masukkan password untuk edit nama:"); if(pwd !== currentAccount.password) { showToast("Password salah"); return; } const newName = prompt("Nama baru:", currentAccount.name); if(newName && newName.trim()) { currentAccount.name = newName.trim(); await updateAccountInFirebase(); dashboardNama.innerText = currentAccount.name; showToast("Nama rekening diubah"); } }
+    function updatePayerDatalists() { const options = availablePayers.map(p => `<option value="${escapeHtml(p)}">`).join(''); payerList.innerHTML = options; editPayerList.innerHTML = options; }
+    async function addNewPayerFromInput(inputElement) { const newPayer = inputElement.value.trim(); if(!newPayer) { showToast("Masukkan nama pembayar"); return; } if(availablePayers.includes(newPayer)) { showToast("Pembayar sudah ada"); return; } availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); showToast(`Pembayar "${newPayer}" ditambahkan`); inputElement.value = newPayer; }
+    
+    async function openPayerManager() { renderPayerList(); payerManagerModal.classList.add('active'); }
+    function renderPayerList() { if(!availablePayers.length) { payerListContainer.innerHTML = '<div class="small-text">Belum ada pembayar, tambahkan.</div>'; return; } payerListContainer.innerHTML = availablePayers.map(p => `<div class="payer-list-item"><span>👤 ${escapeHtml(p)}</span><button class="delete-payer-btn" data-payer="${escapeHtml(p)}" style="background:none; border:none; font-size:1.2rem; cursor:pointer;">🗑️</button></div>`).join(''); document.querySelectorAll('.delete-payer-btn').forEach(btn => btn.addEventListener('click', async () => { const payer = btn.dataset.payer; if(confirm(`Hapus pembayar "${payer}"? Transaksi dengan pembayar ini akan menjadi kosong.`)) { availablePayers = availablePayers.filter(p => p !== payer); currentAccount.transactions.forEach(tx => { if(tx.payer === payer) tx.payer = ""; }); await updateAccountInFirebase(); updatePayerDatalists(); renderFilteredTransactions(); renderPayerList(); showToast("Pembayar dihapus"); } })); }
+    async function addNewPayerGlobal() { const newPayer = newPayerName.value.trim(); if(!newPayer) return; if(availablePayers.includes(newPayer)) { showToast("Sudah ada"); return; } availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); renderFilteredTransactions(); renderPayerList(); newPayerName.value = ''; showToast("Pembayar ditambahkan"); }
+    
     function openAddTransactionModal(type) {
         pendingTransactionType = type;
         transaksiModalTitle.innerText = type === 'income' ? '➕ Tambah Pemasukan' : '➖ Tambah Pengeluaran';
-        txDesc.value = '';
-        txAmount.value = '';
-        txDate.value = new Date().toISOString().split('T')[0];
+        txRawText.value = '';
         txPayer.value = '';
+        txDate.value = new Date().toISOString().split('T')[0];
         transaksiModal.classList.add('active');
     }
     async function saveNewTransaction() {
-        const desc = txDesc.value.trim();
-        let amount = parseFloat(txAmount.value);
+        const rawText = txRawText.value.trim();
+        if(!rawText) { showToast("Masukkan deskripsi dan nominal"); return; }
+        let parsed;
+        try { parsed = parseTransactionText(rawText, pendingTransactionType); } catch(e) { showToast(e.message); return; }
         const payer = txPayer.value.trim();
         let date = txDate.value;
-        if(!desc) { showToast("Deskripsi wajib"); return; }
-        if(isNaN(amount) || amount <= 0) { showToast("Nominal > 0"); return; }
         if(!date) date = new Date().toISOString().split('T')[0];
-        // Jika payer belum ada di daftar, tambahkan otomatis
-        if(payer && !availablePayers.includes(payer)) {
-            availablePayers.push(payer);
-            await updateAccountInFirebase();
-            updatePayerDatalists();
-        }
-        const newTx = {
-            id: Date.now().toString() + Math.random().toString(36).substr(2, 5),
-            description: desc,
-            amount: Math.abs(amount),
-            type: pendingTransactionType,
-            payer: payer || "",
-            date: new Date(date).toISOString()
-        };
+        if(payer && !availablePayers.includes(payer)) { availablePayers.push(payer); await updateAccountInFirebase(); updatePayerDatalists(); }
+        const newTx = { id: Date.now().toString() + Math.random().toString(36).substr(2, 5), description: parsed.description, amount: parsed.amount, type: pendingTransactionType, payer: payer || "", date: new Date(date).toISOString() };
         currentAccount.transactions = [newTx, ...(currentAccount.transactions || [])];
         await updateAccountInFirebase();
         renderFilteredTransactions();
         transaksiModal.classList.remove('active');
-        showToast("Transaksi ditambahkan");
+        showToast(`Transaksi ${pendingTransactionType === 'income' ? 'pemasukan' : 'pengeluaran'} ditambahkan (Rp ${parsed.amount.toLocaleString()})`);
     }
-
-    // Sorting & filtering
+    
     async function renderFilteredTransactions() {
         if(!currentAccount) return;
         let filtered = [...(currentAccount.transactions || [])];
         const start = filterStart.value, end = filterEnd.value;
         if(start) filtered = filtered.filter(t => new Date(t.date) >= new Date(start));
         if(end) filtered = filtered.filter(t => new Date(t.date) <= new Date(end + "T23:59:59"));
-        
-        const field = sortField.value;
-        const order = sortOrder.value;
-        filtered.sort((a, b) => {
-            let valA, valB;
-            if(field === 'date') { valA = new Date(a.date); valB = new Date(b.date); }
-            else if(field === 'description') { valA = a.description.toLowerCase(); valB = b.description.toLowerCase(); }
-            else if(field === 'payer') { valA = (a.payer || '').toLowerCase(); valB = (b.payer || '').toLowerCase(); }
-            else if(field === 'amount') { valA = a.amount; valB = b.amount; }
-            if(order === 'asc') return valA > valB ? 1 : -1;
-            else return valA < valB ? 1 : -1;
-        });
-        
-        let saldo = 0;
-        (currentAccount.transactions || []).forEach(tx => { if(tx.type === 'income') saldo += tx.amount; else saldo -= tx.amount; });
+        const field = sortField.value, order = sortOrder.value;
+        filtered.sort((a,b) => { let valA, valB; if(field === 'date') { valA = new Date(a.date); valB = new Date(b.date); } else if(field === 'description') { valA = a.description.toLowerCase(); valB = b.description.toLowerCase(); } else if(field === 'payer') { valA = (a.payer || '').toLowerCase(); valB = (b.payer || '').toLowerCase(); } else { valA = a.amount; valB = b.amount; } if(order === 'asc') return valA > valB ? 1 : -1; else return valA < valB ? 1 : -1; });
+        let saldo = 0; (currentAccount.transactions || []).forEach(tx => { if(tx.type === 'income') saldo += tx.amount; else saldo -= tx.amount; });
         dashboardSaldo.innerText = formatRupiah(saldo);
-        
         if(!filtered.length) { transactionsListEl.innerHTML = '<div class="empty-trans">Tidak ada transaksi</div>'; return; }
-        transactionsListEl.innerHTML = filtered.map(tx => `
-            <div class="transaksi-item" data-id="${tx.id}">
-                <div class="transaksi-detail">
-                    <div class="transaksi-deskripsi">
-                        ${escapeHtml(tx.description)}
-                        ${tx.payer ? `<span class="payer-badge">👤 ${escapeHtml(tx.payer)}</span>` : ''}
-                    </div>
-                    <div class="transaksi-tanggal">${formatDate(tx.date)}</div>
-                </div>
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="transaksi-nominal ${tx.type === 'income' ? 'income' : 'expense'}">
-                        ${tx.type === 'income' ? '+' : '-'} ${formatRupiah(tx.amount)}
-                    </span>
-                    <div class="action-buttons">
-                        <button class="edit-trans" data-id="${tx.id}">✏️</button>
-                        <button class="delete-trans" data-id="${tx.id}">🗑️</button>
-                    </div>
-                </div>
-            </div>
-        `).join('');
-        document.querySelectorAll('.delete-trans').forEach(btn => btn.addEventListener('click', async (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            if(confirm("Hapus transaksi?")) {
-                currentAccount.transactions = currentAccount.transactions.filter(t => t.id !== id);
-                await updateAccountInFirebase();
-                renderFilteredTransactions();
-                showToast("Dihapus");
-            }
-        }));
-        document.querySelectorAll('.edit-trans').forEach(btn => btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const id = btn.dataset.id;
-            const tx = currentAccount.transactions.find(t => t.id === id);
-            if(tx) openEditModal(tx);
-        }));
+        transactionsListEl.innerHTML = filtered.map(tx => `<div class="transaksi-item" data-id="${tx.id}"><div class="transaksi-detail"><div class="transaksi-deskripsi">${escapeHtml(tx.description)}${tx.payer ? `<span class="payer-badge">👤 ${escapeHtml(tx.payer)}</span>` : ''}<div class="transaksi-tanggal">${formatDate(tx.date)}</div></div></div><div style="display:flex; align-items:center; gap:8px;"><span class="transaksi-nominal ${tx.type === 'income' ? 'income' : 'expense'}">${tx.type === 'income' ? '+' : '-'} ${formatRupiah(tx.amount)}</span><div class="action-buttons"><button class="edit-trans" data-id="${tx.id}">✏️</button><button class="delete-trans" data-id="${tx.id}">🗑️</button></div></div></div>`).join('');
+        document.querySelectorAll('.delete-trans').forEach(btn => btn.addEventListener('click', async (e) => { e.stopPropagation(); const id = btn.dataset.id; if(confirm("Hapus transaksi?")) { currentAccount.transactions = currentAccount.transactions.filter(t => t.id !== id); await updateAccountInFirebase(); renderFilteredTransactions(); showToast("Dihapus"); } }));
+        document.querySelectorAll('.edit-trans').forEach(btn => btn.addEventListener('click', (e) => { e.stopPropagation(); const id = btn.dataset.id; const tx = currentAccount.transactions.find(t => t.id === id); if(tx) openEditModal(tx); }));
     }
-    function openEditModal(tx) {
-        currentEditTransactionId = tx.id;
-        editDesc.value = tx.description;
-        editAmount.value = tx.amount;
-        editDate.value = tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0];
-        editPayer.value = tx.payer || "";
-        editTransModal.classList.add('active');
-    }
-    async function saveEditedTransaction() {
-        const newDesc = editDesc.value.trim();
-        const newAmount = parseFloat(editAmount.value);
-        let newPayer = editPayer.value.trim();
-        const newDate = editDate.value;
-        if(!newDesc || isNaN(newAmount) || newAmount <= 0) { showToast("Data tidak valid"); return; }
-        if(newPayer && !availablePayers.includes(newPayer)) {
-            availablePayers.push(newPayer);
-            await updateAccountInFirebase();
-            updatePayerDatalists();
-        }
-        const index = currentAccount.transactions.findIndex(t => t.id === currentEditTransactionId);
-        if(index !== -1) {
-            currentAccount.transactions[index] = { ...currentAccount.transactions[index], description: newDesc, amount: Math.abs(newAmount), payer: newPayer || "", date: new Date(newDate).toISOString() };
-            await updateAccountInFirebase();
-            renderFilteredTransactions();
-            showToast("Transaksi diupdate");
-        }
-        editTransModal.classList.remove('active');
-    }
-    function resetFilters() {
-        filterStart.value = '';
-        filterEnd.value = '';
-        sortField.value = 'date';
-        sortOrder.value = 'desc';
-        renderFilteredTransactions();
-    }
+    function openEditModal(tx) { currentEditTransactionId = tx.id; editDesc.value = tx.description; editAmount.value = tx.amount; editDate.value = tx.date ? tx.date.split('T')[0] : new Date().toISOString().split('T')[0]; editPayer.value = tx.payer || ""; editTransModal.classList.add('active'); }
+    async function saveEditedTransaction() { const newDesc = editDesc.value.trim(); const newAmount = parseFloat(editAmount.value); let newPayer = editPayer.value.trim(); const newDate = editDate.value; if(!newDesc || isNaN(newAmount) || newAmount <= 0) { showToast("Data tidak valid"); return; } if(newPayer && !availablePayers.includes(newPayer)) { availablePayers.push(newPayer); await updateAccountInFirebase(); updatePayerDatalists(); } const index = currentAccount.transactions.findIndex(t => t.id === currentEditTransactionId); if(index !== -1) { currentAccount.transactions[index] = { ...currentAccount.transactions[index], description: newDesc, amount: Math.abs(newAmount), payer: newPayer || "", date: new Date(newDate).toISOString() }; await updateAccountInFirebase(); renderFilteredTransactions(); showToast("Transaksi diupdate"); } editTransModal.classList.remove('active'); }
+    function resetFilters() { filterStart.value = ''; filterEnd.value = ''; sortField.value = 'date'; sortOrder.value = 'desc'; renderFilteredTransactions(); }
 
     // Event listeners
     btnTambahRekening.addEventListener('click', () => { modalTitle.innerText = "Rekening Baru"; modalInputName.style.display = 'block'; modalInputPassword.value = ''; modalInputName.value = ''; modal.dataset.mode = 'create'; modal.classList.add('active'); });
     modalCancelBtn.addEventListener('click', closeModal);
-    modalConfirmBtn.addEventListener('click', async () => {
-        if(modal.dataset.mode === 'create') {
-            try { await createNewAccount(modalInputName.value.trim(), modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; }
-        } else if(modal.dataset.mode === 'login') {
-            try { await verifyAndLogin(modal.dataset.id, modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; }
-        }
-    });
-    logoutButton.addEventListener('click', logout);
-    editAccountBtn.addEventListener('click', editAccountName);
-    deleteAccountBtn.addEventListener('click', deleteAccountWithPassword);
-    btnIncomeFloating.addEventListener('click', () => openAddTransactionModal('income'));
-    btnExpenseFloating.addEventListener('click', () => openAddTransactionModal('expense'));
-    txModalCancel.addEventListener('click', () => transaksiModal.classList.remove('active'));
-    txModalSave.addEventListener('click', saveNewTransaction);
-    editTransCancel.addEventListener('click', () => editTransModal.classList.remove('active'));
-    editTransSave.addEventListener('click', saveEditedTransaction);
-    resetFilterBtn.addEventListener('click', resetFilters);
-    filterStart.addEventListener('change', renderFilteredTransactions);
-    filterEnd.addEventListener('change', renderFilteredTransactions);
-    sortField.addEventListener('change', renderFilteredTransactions);
-    sortOrder.addEventListener('change', renderFilteredTransactions);
-    btnAddNewPayer.addEventListener('click', () => addNewPayerFromInput(txPayer, 'payerList'));
-    btnEditAddNewPayer.addEventListener('click', () => addNewPayerFromInput(editPayer, 'editPayerList'));
-
+    modalConfirmBtn.addEventListener('click', async () => { if(modal.dataset.mode === 'create') { try { await createNewAccount(modalInputName.value.trim(), modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; } } else if(modal.dataset.mode === 'login') { try { await verifyAndLogin(modal.dataset.id, modalInputPassword.value.trim()); closeModal(); } catch(e) { modalError.innerText = e.message; } } });
+    logoutButton.addEventListener('click', logout); editAccountBtn.addEventListener('click', editAccountName); deleteAccountBtn.addEventListener('click', deleteAccountWithPassword);
+    btnIncomeFloating.addEventListener('click', () => openAddTransactionModal('income')); btnExpenseFloating.addEventListener('click', () => openAddTransactionModal('expense'));
+    txModalCancel.addEventListener('click', () => transaksiModal.classList.remove('active')); txModalSave.addEventListener('click', saveNewTransaction);
+    editTransCancel.addEventListener('click', () => editTransModal.classList.remove('active')); editTransSave.addEventListener('click', saveEditedTransaction);
+    resetFilterBtn.addEventListener('click', resetFilters); filterStart.addEventListener('change', renderFilteredTransactions); filterEnd.addEventListener('change', renderFilteredTransactions); sortField.addEventListener('change', renderFilteredTransactions); sortOrder.addEventListener('change', renderFilteredTransactions);
+    btnAddNewPayer.addEventListener('click', () => addNewPayerFromInput(txPayer)); btnEditAddNewPayer.addEventListener('click', () => addNewPayerFromInput(editPayer));
+    managePayerBtn.addEventListener('click', openPayerManager); addNewPayerBtn.addEventListener('click', addNewPayerGlobal); closePayerManager.addEventListener('click', () => payerManagerModal.classList.remove('active'));
     window.addEventListener('DOMContentLoaded', () => { loadAccounts(); });
 </script>
 </body>
